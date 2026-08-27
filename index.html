@@ -141,6 +141,14 @@ h1,h2,h3{margin:0}
 .mini-btn.skip:hover{color:var(--warn);border-color:var(--warn)}
 .mini-btn.restore{color:var(--cy-ink);border-color:var(--cy)}
 .empty{padding:22px 14px;text-align:center;color:var(--faint);font-size:14px;font-weight:500}
+.dstat{flex:0 0 auto;width:25px;height:25px;border-radius:8px;border:2px solid var(--warn);color:var(--warn);background:var(--warn-soft);display:grid;place-items:center;font-weight:800;font-size:15px;line-height:1;margin-top:1px}
+.task.disp{background:rgba(217,119,6,.06)}
+.chip.disp{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.chip.disagree{color:#fff;background:var(--warn);border-color:transparent}
+.mini-btn.warn-btn{color:var(--warn);border-color:var(--warn)}
+.disp-form{align-items:center}
+.disp-input{flex:1 1 140px;min-width:90px;height:28px;border:1px solid var(--line);border-radius:8px;padding:0 9px;font-size:12.5px;font-family:inherit;background:var(--field);color:var(--text)}
+.disp-input:focus{outline:none;border-color:var(--cy)}
 
 /* weekly calendar */
 .wknav{display:flex;align-items:center;gap:8px;margin:0 2px 12px}
@@ -391,12 +399,13 @@ function normalize(s){
   if(!s.capacity) s.capacity={p1:50};
   if(!s.moved) s.moved={};
   if(!s.extra) s.extra={};
+  if(!s.dispute) s.dispute={};
   if(s.chores && !Array.isArray(s.chores)) s.chores=Object.keys(s.chores).map(function(k){return s.chores[k];});
   if(s.people && !Array.isArray(s.people)) s.people=Object.keys(s.people).map(function(k){return s.people[k];});
   s.chores.forEach(function(c){ if(!c.freq)c.freq={t:"daily"}; if(typeof c.points!=="number")c.points=1; if(!c.perDay||c.perDay<1)c.perDay=1; if(c.why==null)c.why=""; if(c.freq&&c.freq.d&&!Array.isArray(c.freq.d)) c.freq.d=Object.keys(c.freq.d).map(function(k){return +c.freq.d[k];}); });
   return s;
 }
-function loadUI(){ var d={me:"p1",manage:false,cal:true,an:true,weekOffset:0,anPeriod:30}; try{ var u=JSON.parse(localStorage.getItem(UIKEY)); if(u){for(var k in u)d[k]=u[k];} }catch(e){} return d; }
+function loadUI(){ var d={me:"p1",manage:false,cal:true,an:true,weekOffset:0,anPeriod:30,disputing:null}; try{ var u=JSON.parse(localStorage.getItem(UIKEY)); if(u){for(var k in u)d[k]=u[k];} }catch(e){} return d; }
 function saveUI(){ try{ localStorage.setItem(UIKEY,JSON.stringify(ui)); }catch(e){} }
 
 /* ---------- date helpers ---------- */
@@ -492,6 +501,7 @@ function analytics(days){
         if(de>0){ var k=c.cat||"Прочее"; cat[pid][k]=(cat[pid][k]||0)+de; }
       });
       var p=per[pid]; p.assigned+=A; p.done+=D; p.skipped+=S; p.kept+=(A-S);
+      if(state.dispute[s]){ comp.due.forEach(function(c){ if(comp.assign[c.id]===pid&&state.dispute[s][c.id])p.disputed++; }); }
       dp[pid]=active>0?Math.round(D/active*100):null;
     });
     trend.push({s:s,p1:dp.p1,p2:dp.p2});
@@ -503,7 +513,7 @@ function analytics(days){
   });
   return {per:per,cat:cat,trend:trend};
 }
-function blank(){ return {assigned:0,done:0,skipped:0,kept:0}; }
+function blank(){ return {assigned:0,done:0,skipped:0,kept:0,disputed:0}; }
 function streakOf(pid){
   var n=0,s=todayStr(),guard=0;
   while(guard++<400){
@@ -527,6 +537,9 @@ function applyOp(o){
   else if(o.t==="reset-ov"){ delete state.overrides[s]; }
   else if(o.t==="snooze"){ var nd=addDays(s,1); if(!state.moved[s])state.moved[s]={}; state.moved[s][o.cid]=1; if(!state.extra[nd])state.extra[nd]={}; state.extra[nd][o.cid]=1; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="unsnooze"){ var un=addDays(s,1); if(state.moved[s]){ delete state.moved[s][o.cid]; if(!Object.keys(state.moved[s]).length)delete state.moved[s]; } if(state.extra[un]){ delete state.extra[un][o.cid]; if(!Object.keys(state.extra[un]).length)delete state.extra[un]; } }
+  else if(o.t==="dispute"){ if(!state.dispute[s])state.dispute[s]={}; state.dispute[s][o.cid]={by:o.by,reason:o.reason||"",st:"open"}; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
+  else if(o.t==="dispute-disagree"){ if(state.dispute[s]&&state.dispute[s][o.cid]){ state.dispute[s][o.cid].st="disagree"; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
+  else if(o.t==="dispute-resolve"){ if(state.dispute[s]){ delete state.dispute[s][o.cid]; if(!Object.keys(state.dispute[s]).length)delete state.dispute[s]; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
   else if(o.t==="cap"){ if(!state.capacity)state.capacity={}; state.capacity.p1=o.p1; }
   else if(o.t==="mode"){ state.mode=o.mode; }
   else if(o.t==="rename"){ var p=getPerson(o.pid); if(p)p.name=o.name; }
@@ -543,6 +556,8 @@ var CARET='<svg class="car" width="16" height="16" viewBox="0 0 24 24" fill="non
 var IC_ARROW='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
 var IC_SKIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M6 6l12 12"/></svg>';
 var IC_CLOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>';
+var IC_FLAG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
+var IC_CHECK2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 5"/></svg>';
 function pcVars(pid){ return "--pc:var(--"+pid+");--pc-ink:var(--"+pid+"-ink);--pc-soft:var(--"+pid+"-soft)"; }
 
 function render(){
@@ -604,6 +619,7 @@ function snoozeStripHTML(s){
   ids.forEach(function(id){ var c=getChore(id); h+='<span class="sz-item">'+esc(c.title)+'<button class="mini-btn restore" data-action="unsnooze" data-cid="'+id+'" data-date="'+s+'" title="Вернуть на сегодня">'+IC_ARROW+' Вернуть</button></span>'; });
   return h+'</div>';
 }
+function dispKey(s,cid){ return s+"|"+cid; }
 function todayColHTML(pid,comp,s){
   var p=getPerson(pid),pr=progress(pid,s,comp),other=pid==="p1"?"p2":"p1";
   var interactive=(pid===ui.me);
@@ -612,9 +628,13 @@ function todayColHTML(pid,comp,s){
   if(!mine.length){ return h+'<div class="empty">Свободно сегодня</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
-    var sk=isSkipped(s,c.id),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=u>=pd,ok=full&&!sk;
-    h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+'">';
-    if(!interactive){ h+='<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
+    var sk=isSkipped(s,c.id),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=u>=pd;
+    var dsp=state.dispute[s]&&state.dispute[s][c.id], dOpen=dsp&&dsp.st==="open", dDis=dsp&&dsp.st==="disagree";
+    var dName=dsp?getPerson(dsp.by).name:'', rsn=(dsp&&dsp.reason)?dsp.reason:'';
+    var ok=full&&!sk&&!dOpen;
+    h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+(dsp?' disp':'')+'">';
+    if(dOpen){ h+='<span class="dstat" title="Оспорено — ожидает ответа">!</span>'; }
+    else if(!interactive){ h+='<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
     else if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
     else if(pd>1){ h+='<div class="step'+(full?' full':'')+'"><button data-action="dec" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Меньше">−</button><span class="n tnum">'+u+'/'+pd+'</span><button data-action="inc" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Больше">+</button></div>'; }
     else{ h+='<button class="ck" data-action="units" data-cid="'+c.id+'" data-date="'+s+'" data-val="'+(u?0:1)+'" aria-label="Отметить">'+CHECK+'</button>'; }
@@ -622,14 +642,31 @@ function todayColHTML(pid,comp,s){
     if(c.why)h+='<div class="why">'+esc(c.why)+'</div>';
     h+='<div class="meta"><span class="chip eff">'+fmtPts(c.points)+' · '+esc(effWord(c.points))+'</span>';
     if(isReactive(c)){ h+='<span class="chip rep">'+esc(depLabel(c))+'</span>'; }
-    else if(interactive){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
+    else if(interactive&&!dOpen){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
     else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
     if(sk)h+='<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
+    if(dOpen)h+='<span class="chip disp">оспорено'+(rsn?' · «'+esc(rsn)+'»':'')+' · '+esc(dName)+'</span>';
+    if(dDis)h+='<span class="chip disagree">разногласие'+(rsn?' · «'+esc(rsn)+'»':'')+'</span>';
     h+='</div></div>';
-    if(interactive&&!sk){ h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+' Передать '+esc(dativeName(getPerson(other).name))+'</button>';
+    if(dOpen){
+      h+='<div class="acts">';
+      if(interactive){ h+='<button class="mini-btn restore" data-action="disp-redo" data-cid="'+c.id+'" data-date="'+s+'" title="Переделал — снова выполнено">'+IC_CHECK2+' Переделал</button><button class="mini-btn" data-action="disp-disagree" data-cid="'+c.id+'" data-date="'+s+'" title="Не согласен — зафиксировать разногласие">Не согласен</button>'; }
+      else if(dsp.by===ui.me){ h+='<button class="mini-btn" data-action="disp-resolve" data-cid="'+c.id+'" data-date="'+s+'" title="Отменить свой спор">Отменить спор</button>'; }
+      h+='</div>';
+    } else if(dDis){
+      h+='<div class="acts"><button class="mini-btn restore" data-action="disp-resolve" data-cid="'+c.id+'" data-date="'+s+'" title="Разногласие решено">Снять разногласие</button></div>';
+    } else if(interactive&&!sk){
+      h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+' Передать '+esc(dativeName(getPerson(other).name))+'</button>';
       if(!isReactive(c)) h+='<button class="mini-btn" data-action="snooze" data-cid="'+c.id+'" data-date="'+s+'" title="Перенести на завтра">'+IC_CLOCK+' Завтра</button>';
-      h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+' Не буду</button></div>'; }
+      h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+' Не буду</button></div>';
+    } else if(!interactive&&full){
+      if(ui.disputing===dispKey(s,c.id)){
+        h+='<div class="acts disp-form"><input id="disputeinput" class="disp-input" type="text" maxlength="80" placeholder="почему? (необязательно)" autocomplete="off"><button class="mini-btn warn-btn" data-action="disp-confirm" data-cid="'+c.id+'" data-date="'+s+'" data-by="'+ui.me+'">'+IC_FLAG+' Оспорить</button><button class="mini-btn" data-action="disp-cancelform" title="Отмена">×</button></div>';
+      } else {
+        h+='<div class="acts"><button class="mini-btn" data-action="disp-open" data-cid="'+c.id+'" data-date="'+s+'" title="Оспорить выполнение">'+IC_FLAG+' Оспорить</button></div>';
+      }
+    }
     h+='</li>';
   });
   return h+'</ul></div>';
@@ -684,6 +721,7 @@ function analyticsHTML(){
     h+=kpi("Эффективность",p.effic==null?"—":p.effic+"<small>%</small>",true);
     h+=kpi("Усилий выполнено",fmtPts(p.done),false);
     h+=kpi("Пропущено усилий",fmtPts(p.skipped),false);
+    h+=kpi("Оспорено",p.disputed+"",false);
     h+=kpi("Серия дней 100%",p.streak+"",false);
     h+=kpi("Назначено усилий",fmtPts(p.assigned),false);
     h+='</div><div class="an-note">Выполняемость — доля усилий, доведённых до конца, из всех назначенных. Эффективность — из тех, что не пропущены.</div></div>';
@@ -818,6 +856,12 @@ root.addEventListener("click",function(e){
   if(a==="swap"){ commit({t:"assign",s:date,cid:cid,to:t.getAttribute("data-to")}); return; }
   if(a==="snooze"){ commit({t:"snooze",s:date,cid:cid}); return; }
   if(a==="unsnooze"){ commit({t:"unsnooze",s:date,cid:cid}); return; }
+  if(a==="disp-open"){ ui.disputing=date+"|"+cid; render(); setTimeout(function(){ var el=document.getElementById("disputeinput"); if(el)el.focus(); },0); return; }
+  if(a==="disp-cancelform"){ ui.disputing=null; render(); return; }
+  if(a==="disp-confirm"){ var di=document.getElementById("disputeinput"); var rs=di?di.value.trim().slice(0,80):""; ui.disputing=null; commit({t:"dispute",s:date,cid:cid,by:t.getAttribute("data-by")||ui.me,reason:rs}); return; }
+  if(a==="disp-redo"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
+  if(a==="disp-disagree"){ ui.disputing=null; commit({t:"dispute-disagree",s:date,cid:cid}); return; }
+  if(a==="disp-resolve"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
   if(a==="reset-ov"){ commit({t:"reset-ov",s:todayStr()}); return; }
   if(a==="week"){ var dd=t.getAttribute("data-d"); ui.weekOffset=(dd==="0")?0:(ui.weekOffset+(+dd)); saveUI(); render(); return; }
   if(a==="anper"){ ui.anPeriod=+t.getAttribute("data-n"); saveUI(); render(); return; }
@@ -859,6 +903,7 @@ root.addEventListener("focusout",function(e){
 root.addEventListener("keydown",function(e){
   if(e.key!=="Enter")return;
   if(e.target.id==="newtitle"){ e.preventDefault(); var b=root.querySelector('[data-action="add"]'); if(b)b.click(); return; }
+  if(e.target.id==="disputeinput"){ e.preventDefault(); var dcf=e.target.closest("li").querySelector('[data-action="disp-confirm"]'); if(dcf)dcf.click(); return; }
   var t=e.target.closest("[data-action]"); if(t){ var a=t.getAttribute("data-action"); if(a==="title"||a==="why"||a==="rename"||a==="cat"||a==="everyn"||a==="ptsnum"||a==="perday")t.blur(); }
 });
 window.addEventListener("scroll",function(){ if(scrollTimer)return; scrollTimer=setTimeout(function(){ scrollTimer=null; try{ sessionStorage.setItem(SCKEY,String(window.scrollY||window.pageYOffset||0)); }catch(e){} },250); },{passive:true});
