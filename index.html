@@ -149,6 +149,19 @@ h1,h2,h3{margin:0}
 .disp-form{align-items:center}
 .disp-input{flex:1 1 140px;min-width:90px;height:28px;border:1px solid var(--line);border-radius:8px;padding:0 9px;font-size:12.5px;font-family:inherit;background:var(--field);color:var(--text)}
 .disp-input:focus{outline:none;border-color:var(--cy)}
+.offnote{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--cy-ink);background:var(--cy-soft);border-radius:10px;padding:8px 12px;margin:2px 0 10px}
+.offbox{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:10px}
+.offname{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--pc-ink);margin-bottom:4px}
+.offline{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.offdays{display:inline-flex;flex-wrap:wrap;gap:4px}
+.offdays button{border:1px solid var(--line);background:var(--field);color:var(--muted);border-radius:8px;min-width:36px;height:30px;padding:0 8px;font-size:12.5px;font-weight:600;transition:.12s}
+.offdays button.on{background:var(--pc);border-color:var(--pc);color:#fff}
+.offdays button.offclear.on{background:var(--field);border-color:var(--faint);color:var(--text)}
+.offd{max-width:150px}
+.btn.sm{height:30px;padding:0 12px;font-size:12.5px}
+.awaylist{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.awayitem{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;color:var(--pc-ink);background:var(--pc-soft);border-radius:8px;padding:3px 4px 3px 10px}
+.awayitem button{border:0;background:transparent;color:var(--pc-ink);font-size:15px;font-weight:700;line-height:1;padding:0 3px}
 
 /* weekly calendar */
 .wknav{display:flex;align-items:center;gap:8px;margin:0 2px 12px}
@@ -400,6 +413,9 @@ function normalize(s){
   if(!s.moved) s.moved={};
   if(!s.extra) s.extra={};
   if(!s.dispute) s.dispute={};
+  if(!s.restDay) s.restDay={};
+  if(!s.away) s.away={};
+  ["p1","p2"].forEach(function(pid){ if(s.away[pid]&&!Array.isArray(s.away[pid])) s.away[pid]=Object.keys(s.away[pid]).map(function(k){return s.away[pid][k];}); });
   if(s.chores && !Array.isArray(s.chores)) s.chores=Object.keys(s.chores).map(function(k){return s.chores[k];});
   if(s.people && !Array.isArray(s.people)) s.people=Object.keys(s.people).map(function(k){return s.people[k];});
   s.chores.forEach(function(c){ if(!c.freq)c.freq={t:"daily"}; if(typeof c.points!=="number")c.points=1; if(!c.perDay||c.perDay<1)c.perDay=1; if(c.why==null)c.why=""; if(c.freq&&c.freq.d&&!Array.isArray(c.freq.d)) c.freq.d=Object.keys(c.freq.d).map(function(k){return +c.freq.d[k];}); });
@@ -452,10 +468,27 @@ function balanceInto(list,assign,di,totals,s){
   var w=shares(),e1=Math.max(w.p1,1e-6),e2=Math.max(w.p2,1e-6),prim=(di%2===0)?["p1","p2"]:["p2","p1"];
   list.forEach(function(c){ var r1=totals.p1/e1,r2=totals.p2/e2,t; if(Math.abs(r1-r2)<1e-9)t=prim[0]; else t=(r1<r2)?"p1":"p2"; assign[c.id]=t; totals[t]+=effortAt(c,s); });
 }
+function isOff(pid,s){
+  var rd=state.restDay&&state.restDay[pid];
+  if(rd!=null&&parseYMD(s).getDay()===rd)return true;
+  var aw=state.away&&state.away[pid];
+  if(aw){ for(var i=0;i<aw.length;i++){ if(aw[i]&&s>=aw[i].from&&s<=aw[i].to)return true; } }
+  return false;
+}
+function offInfo(pid,s){
+  var rd=state.restDay&&state.restDay[pid];
+  if(rd!=null&&parseYMD(s).getDay()===rd)return "отдых";
+  var aw=state.away&&state.away[pid];
+  if(aw){ for(var i=0;i<aw.length;i++){ if(aw[i]&&s>=aw[i].from&&s<=aw[i].to)return "отъезд"; } }
+  return null;
+}
 function computeAssignments(s){
   var due=state.chores.filter(function(c){ return occursOn(c,s); });
   var assign={},di=dayIndex(s),cmp=byEffDescOn(s);
-  if(state.mode==="fixed"){
+  var off1=isOff("p1",s),off2=isOff("p2",s);
+  if(off1&&!off2){ due.forEach(function(c){ assign[c.id]="p2"; }); }
+  else if(off2&&!off1){ due.forEach(function(c){ assign[c.id]="p1"; }); }
+  else if(state.mode==="fixed"){
     var rest=[],totals={p1:0,p2:0};
     due.forEach(function(c){ if(c.owner==="p1"||c.owner==="p2"){assign[c.id]=c.owner;totals[c.owner]+=effortAt(c,s);} else rest.push(c); });
     balanceInto(rest.sort(cmp),assign,di,totals,s);
@@ -502,6 +535,7 @@ function analytics(days){
       });
       var p=per[pid]; p.assigned+=A; p.done+=D; p.skipped+=S; p.kept+=(A-S);
       if(state.dispute[s]){ comp.due.forEach(function(c){ if(comp.assign[c.id]===pid&&state.dispute[s][c.id])p.disputed++; }); }
+      if(isOff(pid,s))p.offdays++;
       dp[pid]=active>0?Math.round(D/active*100):null;
     });
     trend.push({s:s,p1:dp.p1,p2:dp.p2});
@@ -513,7 +547,7 @@ function analytics(days){
   });
   return {per:per,cat:cat,trend:trend};
 }
-function blank(){ return {assigned:0,done:0,skipped:0,kept:0,disputed:0}; }
+function blank(){ return {assigned:0,done:0,skipped:0,kept:0,disputed:0,offdays:0}; }
 function streakOf(pid){
   var n=0,s=todayStr(),guard=0;
   while(guard++<400){
@@ -540,6 +574,9 @@ function applyOp(o){
   else if(o.t==="dispute"){ if(!state.dispute[s])state.dispute[s]={}; state.dispute[s][o.cid]={by:o.by,reason:o.reason||"",st:"open"}; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="dispute-disagree"){ if(state.dispute[s]&&state.dispute[s][o.cid]){ state.dispute[s][o.cid].st="disagree"; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
   else if(o.t==="dispute-resolve"){ if(state.dispute[s]){ delete state.dispute[s][o.cid]; if(!Object.keys(state.dispute[s]).length)delete state.dispute[s]; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
+  else if(o.t==="restday"){ if(!state.restDay)state.restDay={}; var rnd=(o.d<0)?null:o.d; state.restDay[o.pid]=(state.restDay[o.pid]===rnd)?null:rnd; }
+  else if(o.t==="away-add"){ if(!state.away)state.away={}; if(!state.away[o.pid])state.away[o.pid]=[]; state.away[o.pid].push({from:o.from,to:o.to}); }
+  else if(o.t==="away-del"){ if(state.away&&state.away[o.pid])state.away[o.pid].splice(o.idx,1); }
   else if(o.t==="cap"){ if(!state.capacity)state.capacity={}; state.capacity.p1=o.p1; }
   else if(o.t==="mode"){ state.mode=o.mode; }
   else if(o.t==="rename"){ var p=getPerson(o.pid); if(p)p.name=o.name; }
@@ -600,6 +637,7 @@ function balanceHTML(s,comp){
   h+='<span class="meta tnum">всего '+fmtPts(t.total)+' усилий · '+comp.due.length+' дел'+((t.skip1+t.skip2)>0?' · пропущено '+fmtPts(t.skip1+t.skip2):'')+'</span>';
   if(hasOv)h+='<button class="reset" data-action="reset-ov">Сбросить к авто</button>';
   h+='</div>';
+  ["p1","p2"].forEach(function(pid){ var oi=offInfo(pid,s); if(oi){ var oth=pid==="p1"?"p2":"p1"; h+='<div class="offnote">'+esc(getPerson(pid).name)+(oi==="отдых"?" сегодня отдыхает":" сейчас не выполняет")+' — все дела берёт '+esc(getPerson(oth).name)+'</div>'; } });
   if(t.total===0){ h+='<div class="split"><span class="s0">на сегодня активных дел нет</span></div>'; }
   else{
     h+='<div class="split">';
@@ -611,6 +649,7 @@ function balanceHTML(s,comp){
 }
 
 function dativeName(nm){ var m={"Маша":"Маше","Егор":"Егору","Маши":"Маше"}; return m[nm]||nm; }
+function genName(nm){ var m={"Маша":"Маши","Егор":"Егора"}; return m[nm]||nm; }
 function snoozeStripHTML(s){
   var mv=state.moved[s]; if(!mv)return"";
   var ids=Object.keys(mv).filter(function(id){ return getChore(id); });
@@ -625,7 +664,7 @@ function todayColHTML(pid,comp,s){
   var interactive=(pid===ui.me);
   var h='<div class="col glass'+(interactive?'':' ro-col')+'" style="'+pcVars(pid)+'"><div class="col-h"><span class="ch-l"><b>'+esc(p.name)+'</b>'+(interactive?'':'<span class="ro-tag">только просмотр</span>')+'</span><span class="mini tnum">'+(pr.empty?'—':(pr.countDone+'/'+pr.count+' дел · '+fmtPts(pr.done)+'/'+fmtPts(pr.tot)+' ус.'))+'</span></div>';
   var mine=tasksFor(pid,comp,s);
-  if(!mine.length){ return h+'<div class="empty">Свободно сегодня</div></div>'; }
+  if(!mine.length){ var oi=offInfo(pid,s); var em=(oi==="отдых")?('Выходной · дела у '+esc(genName(getPerson(other).name))):((oi==="отъезд")?('Не выполняет · дела у '+esc(genName(getPerson(other).name))):'Свободно сегодня'); return h+'<div class="empty">'+em+'</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
     var sk=isSkipped(s,c.id),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=u>=pd;
@@ -720,10 +759,11 @@ function analyticsHTML(){
     h+=kpi("Выполняемость",p.vypoln==null?"—":p.vypoln+"<small>%</small>",true);
     h+=kpi("Эффективность",p.effic==null?"—":p.effic+"<small>%</small>",true);
     h+=kpi("Усилий выполнено",fmtPts(p.done),false);
+    h+=kpi("Назначено усилий",fmtPts(p.assigned),false);
     h+=kpi("Пропущено усилий",fmtPts(p.skipped),false);
     h+=kpi("Оспорено",p.disputed+"",false);
+    h+=kpi("Дней отдыха",p.offdays+"",false);
     h+=kpi("Серия дней 100%",p.streak+"",false);
-    h+=kpi("Назначено усилий",fmtPts(p.assigned),false);
     h+='</div><div class="an-note">Выполняемость — доля усилий, доведённых до конца, из всех назначенных. Эффективность — из тех, что не пропущены.</div></div>';
   });
   h+='</div>';
@@ -751,7 +791,7 @@ function analyticsHTML(){
 function kpi(label,val,hl){ return '<div class="kpi'+(hl?' hl':'')+'"><div class="kl">'+label+'</div><div class="kv tnum">'+val+'</div></div>'; }
 
 function trendSVG(trend){
-  var W=680,H=150,pl=34,pr=54,pt=12,pb=22,pw=W-pl-pr,ph=H-pt-pb,n=trend.length;
+  var W=680,H=150,pl=34,pr=26,pt=12,pb=22,pw=W-pl-pr,ph=H-pt-pb,n=trend.length;
   function X(i){ return pl+(n<=1?pw/2:i*pw/(n-1)); }
   function Y(v){ return pt+(1-v/100)*ph; }
   var g='';
@@ -767,12 +807,7 @@ function trendSVG(trend){
   var svg='<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Выполнение по дням">';
   svg+='<line class="axis" x1="'+pl+'" y1="'+(pt+ph)+'" x2="'+(W-pr)+'" y2="'+(pt+ph)+'"/>';
   svg+=g+series("p1","var(--p1)")+series("p2","var(--p2)");
-  /* end labels */
-  var last1=null,last2=null; for(var i=0;i<n;i++){ if(trend[i].p1!=null)last1=i; if(trend[i].p2!=null)last2=i; }
-  var y1=last1!=null?Y(trend[last1].p1):null, y2=last2!=null?Y(trend[last2].p2):null, o1=3, o2=3;
-  if(y1!=null&&y2!=null&&Math.abs(y1-y2)<14){ o1=-3; o2=14; }
-  if(last1!=null)svg+='<text class="tick" x="'+(X(last1)+7)+'" y="'+(y1+o1)+'" fill="var(--p1-ink)" font-weight="700" text-anchor="start">'+esc(getPerson("p1").name)+'</text>';
-  if(last2!=null)svg+='<text class="tick" x="'+(X(last2)+7)+'" y="'+(y2+o2)+'" fill="var(--p2-ink)" font-weight="700" text-anchor="start">'+esc(getPerson("p2").name)+'</text>';
+  /* line names are shown in the legend above the chart */
   return svg+'</svg>';
 }
 function catCard(pid,catObj){
@@ -784,6 +819,24 @@ function catCard(pid,catObj){
   return h+'</div></div>';
 }
 
+function fmtRange(a,b){ var da=parseYMD(a),db=parseYMD(b); return da.getDate()+' '+MONTHS_SH[da.getMonth()]+' – '+db.getDate()+' '+MONTHS_SH[db.getMonth()]; }
+function offSettingsHTML(){
+  var h='<div class="lbl" style="margin-top:16px">Отдых и «временно не выполняю»</div>';
+  h+='<div class="hint">Выходной день недели — в этот день все дела берёт второй. «Не выполняю» — период отъезда или болезни, когда дела тоже уходят второму.</div>';
+  state.people.forEach(function(p){
+    var pid=p.id, rd=(state.restDay&&state.restDay[pid]!=null)?state.restDay[pid]:null, aw=(state.away&&state.away[pid])?state.away[pid]:[];
+    h+='<div class="offbox '+pid+'" style="'+pcVars(pid)+'"><div class="offname">'+esc(p.name)+'</div>';
+    h+='<div class="offline"><span class="lbl">Выходной</span><span class="offdays">';
+    WD_ORDER.forEach(function(d){ h+='<button class="'+(rd===d?'on':'')+'" data-action="restday" data-pid="'+pid+'" data-d="'+d+'">'+WD[d]+'</button>'; });
+    h+='<button class="offclear'+(rd==null?' on':'')+'" data-action="restday" data-pid="'+pid+'" data-d="-1">нет</button>';
+    h+='</span></div>';
+    h+='<div class="offline"><span class="lbl">Не выполняю</span><input type="date" class="m-cat offd" id="awayfrom-'+pid+'"><span class="lbl">—</span><input type="date" class="m-cat offd" id="awayto-'+pid+'"><button class="btn sm" data-action="away-add" data-pid="'+pid+'">Добавить период</button></div>';
+    if(aw.length){ h+='<div class="awaylist">'; aw.forEach(function(pr,i){ h+='<span class="awayitem">'+esc(fmtRange(pr.from,pr.to))+'<button data-action="away-del" data-pid="'+pid+'" data-idx="'+i+'" title="Убрать">×</button></span>'; }); h+='</div>'; }
+    h+='</div>';
+  });
+  if(state.restDay&&state.restDay.p1!=null&&state.restDay.p1===state.restDay.p2){ h+='<div class="hint" style="color:var(--warn)">Оба выбрали один и тот же выходной — в этот день дела делятся как обычно (кто-то один должен работать).</div>'; }
+  return h;
+}
 /* ---------- manage ---------- */
 function capacityHTML(){
   var cp=(state.capacity&&state.capacity.p1!=null)?state.capacity.p1:50;
@@ -799,6 +852,7 @@ function manageHTML(){
   [["balanced","Поровну по усилиям"],["rotate","Чередовать по дням"],["fixed","Закрепить за каждым"]].forEach(function(m){ h+='<button class="m'+(state.mode===m[0]?' on':'')+'" data-action="mode" data-mode="'+m[0]+'">'+m[1]+'</button>'; });
   h+='</div><div class="hint">'+modeHint()+'</div>';
   h+=capacityHTML();
+  h+=offSettingsHTML();
   h+='<div class="lbl">Усилия — что значат оценки</div><div class="effleg">';
   EFF_LEGEND.forEach(function(e){ h+='<span class="e"><b>'+e[0]+'</b> '+e[1]+'</span>'; });
   h+='</div>';
@@ -862,6 +916,9 @@ root.addEventListener("click",function(e){
   if(a==="disp-redo"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
   if(a==="disp-disagree"){ ui.disputing=null; commit({t:"dispute-disagree",s:date,cid:cid}); return; }
   if(a==="disp-resolve"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
+  if(a==="restday"){ commit({t:"restday",pid:t.getAttribute("data-pid"),d:+t.getAttribute("data-d")}); return; }
+  if(a==="away-add"){ var apid=t.getAttribute("data-pid"),af=document.getElementById("awayfrom-"+apid),at=document.getElementById("awayto-"+apid),fv=af&&af.value,tv=at&&at.value; if(!fv||!tv){ if(af&&!fv)af.focus(); return; } if(fv>tv){ var sw=fv; fv=tv; tv=sw; } commit({t:"away-add",pid:apid,from:fv,to:tv}); return; }
+  if(a==="away-del"){ commit({t:"away-del",pid:t.getAttribute("data-pid"),idx:+t.getAttribute("data-idx")}); return; }
   if(a==="reset-ov"){ commit({t:"reset-ov",s:todayStr()}); return; }
   if(a==="week"){ var dd=t.getAttribute("data-d"); ui.weekOffset=(dd==="0")?0:(ui.weekOffset+(+dd)); saveUI(); render(); return; }
   if(a==="anper"){ ui.anPeriod=+t.getAttribute("data-n"); saveUI(); render(); return; }
