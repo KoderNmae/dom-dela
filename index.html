@@ -155,6 +155,51 @@ h1,h2,h3{margin:0}
 .chip.pend{color:var(--muted);background:transparent;border:1px dashed var(--faint)}
 .calitem.pend{opacity:.72}
 .calitem.pend .cd{color:var(--muted)}
+/* compact chore rows */
+.chsearch{margin:8px 0 4px}
+.chsearch input{width:100%;height:40px;border:1px solid var(--line);border-radius:11px;padding:0 14px;font-size:15px;font-family:inherit;background:var(--field);color:var(--text)}
+.chsearch input:focus{outline:none;border-color:var(--cy)}
+.mrow{border:1px solid var(--line-2);border-radius:12px;margin-top:8px;overflow:hidden;background:var(--field)}
+.mrow.open{border-color:var(--cy)}
+.mrc{display:grid;grid-template-columns:1fr auto;gap:6px 10px;width:100%;text-align:left;padding:12px 14px;background:transparent;border:0}
+.mrc-t{grid-column:1;grid-row:1;font-weight:600;font-size:15px;line-height:1.25;color:var(--text);min-width:0}
+.mrc-s{grid-column:1;grid-row:2;display:flex;flex-wrap:wrap;align-items:center;gap:5px}
+.mrc-when{font-size:11.5px;font-weight:600;color:var(--muted)}
+.mrc-chev{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--faint);display:flex;transition:.15s}
+.mrow.open .mrc-chev{transform:rotate(90deg)}
+.m-edit{padding:4px 14px 14px;border-top:1px solid var(--line-2);display:flex;flex-direction:column;gap:4px}
+.m-edit .fl{font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);margin-top:10px}
+.m-edit input,.m-edit select.m-sel{height:40px;border:1px solid var(--line);border-radius:10px;padding:0 12px;font-size:15px;font-family:inherit;background:#fff;color:var(--text);margin:0;width:100%;box-sizing:border-box}
+.m-edit input.m-num{width:76px}
+.m-edit input.m-n{width:66px}
+.m-edit input:focus,.m-edit select:focus{outline:none;border-color:var(--cy)}
+.m-edit .m-line{display:flex;align-items:center;gap:8px;margin-top:2px}
+.m-edit .m-line.wrap{flex-wrap:wrap}
+.m-edit .m-num{width:76px}
+.m-edit .m-n{width:66px}
+.m-edit .m-sel{width:100%}
+.m-edit .pts{display:inline-flex;flex-wrap:wrap;gap:5px}
+.m-edit .pts button{min-width:42px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font-weight:700;font-size:14px}
+.m-edit .pts button.on{background:var(--cy);border-color:var(--cy);color:#fff}
+.m-edit .dow{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
+.m-edit .dow button{min-width:44px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--muted);font-weight:600;font-size:13px}
+.m-edit .dow button.on{background:var(--pc,#06b6d4);border-color:var(--pc,#06b6d4);color:#fff}
+.m-edit .cyc{display:inline-flex;flex-wrap:wrap;gap:5px}
+.m-edit .cyc .cycb{height:34px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--muted);font-weight:600;font-size:12.5px}
+.m-edit .cyc .cycb.on{background:var(--cy);border-color:var(--cy);color:#fff}
+.m-edit .effword{font-size:13px;font-weight:600;color:var(--muted)}
+.m-edit-foot{margin-top:14px}
+.m-edit .del{height:38px;padding:0 16px;border:1px solid var(--warn);border-radius:10px;background:transparent;color:var(--warn);font-weight:600;font-size:13.5px}
+/* analytics headline */
+.an-big{display:flex;align-items:baseline;gap:2px;margin-top:6px}
+.an-pct{font-size:40px;font-weight:800;letter-spacing:-.02em;color:var(--pc-ink);line-height:1}
+.an-pctu{font-size:20px;font-weight:700;color:var(--pc-ink)}
+.an-cap{font-size:13px;font-weight:600;color:var(--muted);margin-top:2px}
+.an-sub{font-size:13.5px;color:var(--text);margin-top:9px}
+.an-explain{font-size:12.5px;line-height:1.45;color:var(--muted);margin:10px 2px 2px}
+.an-more{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;height:42px;margin-top:14px;border:1px solid var(--line);border-radius:12px;background:var(--field);color:var(--text);font-weight:600;font-size:14px}
+.an-more .car{transition:.15s}
+.an-details{margin-top:12px;display:flex;flex-direction:column;gap:12px}
 .offnote{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--cy-ink);background:var(--cy-soft);border-radius:10px;padding:8px 12px;margin:2px 0 10px}
 .offbox{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:10px}
 .offname{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--pc-ink);margin-bottom:4px}
@@ -246,8 +291,6 @@ svg text.tick{fill:var(--faint);font-size:10.5px;font-family:var(--font-ui)}
 .effleg{display:flex;flex-wrap:wrap;gap:6px;margin:2px 2px 16px}
 .effleg .e{font-size:11.5px;font-weight:600;color:var(--muted);background:var(--field);border:1px solid var(--line-2);border-radius:7px;padding:3px 8px}
 .effleg .e b{color:var(--text)}
-.mrow{display:grid;grid-template-columns:1fr auto;gap:8px 10px;align-items:start;padding:12px 0;border-top:1px solid var(--line)}
-.mrow:first-of-type{border-top:0}
 .m-main{display:flex;flex-direction:column;gap:8px;min-width:0}
 .m-title{width:100%;border:1px solid transparent;background:transparent;border-radius:8px;padding:4px 6px;font-weight:600;font-size:15px;margin-left:-6px}
 .m-title:hover{border-color:var(--line)}
@@ -427,7 +470,7 @@ function normalize(s){
   s.chores.forEach(function(c){ if(!c.freq)c.freq={t:"daily"}; if(typeof c.points!=="number")c.points=1; if(!c.perDay||c.perDay<1)c.perDay=1; if(c.why==null)c.why=""; if(c.freq&&c.freq.d&&!Array.isArray(c.freq.d)) c.freq.d=Object.keys(c.freq.d).map(function(k){return +c.freq.d[k];}); });
   return s;
 }
-function loadUI(){ var d={me:"p1",manage:false,cal:true,an:true,weekOffset:0,anPeriod:30,disputing:null}; try{ var u=JSON.parse(localStorage.getItem(UIKEY)); if(u){for(var k in u)d[k]=u[k];} }catch(e){} return d; }
+function loadUI(){ var d={me:"p1",manage:false,cal:true,an:true,weekOffset:0,anPeriod:30,disputing:null,editing:null,anDetails:false}; try{ var u=JSON.parse(localStorage.getItem(UIKEY)); if(u){for(var k in u)d[k]=u[k];} }catch(e){} return d; }
 function saveUI(){ try{ localStorage.setItem(UIKEY,JSON.stringify(ui)); }catch(e){} }
 
 /* ---------- date helpers ---------- */
@@ -645,7 +688,7 @@ function render(){
 
   html+='<div class="foot"><span class="st '+statusName+'" id="st"><span class="dot"></span>'+statusText()+'</span><span class="sp"></span><button class="lk" data-action="help">Как это работает вдвоём?</button></div>';
 
-  root.innerHTML=html;
+  root.innerHTML=html; applyChoreFilter();
   if(!restored){ restored=true; var y=0; try{ y=+sessionStorage.getItem(SCKEY)||0; }catch(e){} if(y)window.scrollTo(0,y); }
 }
 
@@ -767,27 +810,24 @@ function calDayHTML(s,today){
 
 /* ---------- analytics section ---------- */
 function analyticsHTML(){
-  var open=ui.an,N=ui.anPeriod,days=lastNDays(N),A=analytics(days),today=todayStr();
-  var h='<div class="sec"><div class="disc glass'+(open?' open':'')+'" data-disc="an"><button class="dh" data-action="toggle-sec" data-sec="an">'+CARET+'<span>Аналитика</span><span class="cnt">выполняемость и нагрузка</span></button><div class="db">';
+  var open=ui.an,N=ui.anPeriod,days=lastNDays(N),A=analytics(days);
+  var h='<div class="sec"><div class="disc glass'+(open?' open':'')+'" data-disc="an"><button class="dh" data-action="toggle-sec" data-sec="an">'+CARET+'<span>Аналитика</span><span class="cnt">кто сколько сделал</span></button><div class="db">';
   h+='<div class="an-per glass">';
   [[7,"7 дней"],[30,"30 дней"]].forEach(function(o){ h+='<button class="'+(N===o[0]?'on':'')+'" data-action="anper" data-n="'+o[0]+'">'+o[1]+'</button>'; });
   h+='</div>';
 
+  /* simple headline cards */
   h+='<div class="an-grid">';
   ["p1","p2"].forEach(function(pid){
     var p=A.per[pid];
-    h+='<div class="an-card glass '+pid+'" style="'+pcVars(pid)+'"><div class="anh">'+esc(getPerson(pid).name)+'</div><div class="an-kpis">';
-    h+=kpi("Выполняемость",p.vypoln==null?"—":p.vypoln+"<small>%</small>",true);
-    h+=kpi("Эффективность",p.effic==null?"—":p.effic+"<small>%</small>",true);
-    h+=kpi("Усилий выполнено",fmtPts(p.done),false);
-    h+=kpi("Назначено усилий",fmtPts(p.assigned),false);
-    h+=kpi("Пропущено усилий",fmtPts(p.skipped),false);
-    h+=kpi("Оспорено",p.disputed+"",false);
-    h+=kpi("Дней отдыха",p.offdays+"",false);
-    h+=kpi("Серия дней 100%",p.streak+"",false);
-    h+='</div><div class="an-note">Выполняемость — доля усилий, доведённых до конца, из всех назначенных. Эффективность — из тех, что не пропущены.</div></div>';
+    h+='<div class="an-card glass '+pid+'" style="'+pcVars(pid)+'"><div class="anh">'+esc(getPerson(pid).name)+'</div>';
+    h+='<div class="an-big"><span class="an-pct tnum">'+(p.vypoln==null?'—':p.vypoln)+'</span>'+(p.vypoln==null?'':'<span class="an-pctu">%</span>')+'</div>';
+    h+='<div class="an-cap">дел доведено до конца</div>';
+    h+='<div class="an-sub">Сделано <b>'+fmtPts(p.done)+'</b> из '+fmtPts(p.assigned)+' усилий за '+N+' дн.</div>';
+    h+='</div>';
   });
   h+='</div>';
+  h+='<div class="an-explain">«Доведено до конца» — какую долю доставшихся усилий отметили выполненными. 100% — успели всё, что на них выпало.</div>';
 
   /* fairness split of DONE effort */
   var dt=A.per.p1.done+A.per.p2.done, f1=dt?Math.round(A.per.p1.done/dt*100):50, f2=100-f1;
@@ -802,13 +842,30 @@ function analyticsHTML(){
   h+=trendSVG(A.trend);
   h+='</div>';
 
-  /* category breakdown */
-  h+='<div class="catwrap">';
-  ["p1","p2"].forEach(function(pid){ h+=catCard(pid,A.cat[pid]); });
-  h+='</div>';
-
+  /* details toggle */
+  h+='<button class="an-more" data-action="an-details">'+(ui.anDetails?"Скрыть подробности":"Показать подробности")+CARET+'</button>';
+  if(ui.anDetails){
+    h+='<div class="an-details">';
+    ["p1","p2"].forEach(function(pid){
+      var p=A.per[pid];
+      h+='<div class="an-card glass '+pid+'" style="'+pcVars(pid)+'"><div class="anh">'+esc(getPerson(pid).name)+'</div><div class="an-kpis">';
+      h+=kpi("Досталось усилий",fmtPts(p.assigned),false);
+      h+=kpi("Сделано усилий",fmtPts(p.done),false);
+      h+=kpi("Без учёта отменённых",p.effic==null?"—":p.effic+"<small>%</small>",true);
+      h+=kpi("Пропущено «не буду»",fmtPts(p.skipped),false);
+      h+=kpi("Оспорено дел",p.disputed+"",false);
+      h+=kpi("Выходных / отъезд",p.offdays+"<small> дн.</small>",false);
+      h+=kpi("Дней подряд на 100%",p.streak+"",false);
+      h+='</div></div>';
+    });
+    h+='<div class="an-explain">«Без учёта отменённых» — выполнение из тех дел, что не сняли кнопкой «не буду». «Пропущено» — усилия, снятые с себя (ушли в этот счётчик). «Оспорено» — сейчас спорных дел.</div>';
+    h+='<div class="catwrap">';
+    ["p1","p2"].forEach(function(pid){ h+=catCard(pid,A.cat[pid]); });
+    h+='</div></div>';
+  }
   return h+'</div></div></div>';
 }
+
 function kpi(label,val,hl){ return '<div class="kpi'+(hl?' hl':'')+'"><div class="kl">'+label+'</div><div class="kv tnum">'+val+'</div></div>'; }
 
 function trendSVG(trend){
@@ -866,6 +923,7 @@ function capacityHTML(){
   h+='<div class="hint">Двигайте, если у кого-то меньше времени — распределение будет стремиться к этой доле вместо 50/50 (в режиме «Поровну по усилиям»).</div>';
   return h;
 }
+var choreQuery="";
 function manageHTML(){
   var open=ui.manage;
   var h='<div class="sec"><div class="disc glass'+(open?' open':'')+'" data-disc="manage"><button class="dh" data-action="toggle-sec" data-sec="manage">'+CARET+'<span>Настроить обязанности и участников</span><span class="cnt">'+state.chores.length+' дел</span></button><div class="db">';
@@ -881,6 +939,7 @@ function manageHTML(){
   state.people.forEach(function(p){ h+='<div class="pe '+p.id+'"><label>'+(p.id==="p1"?"Первый":"Второй")+'</label><input data-action="rename" data-pid="'+p.id+'" value="'+esc(p.name)+'" maxlength="24"></div>'; });
   h+='</div>';
   h+='<div class="lbl" style="margin:16px 0 2px">Список дел</div><datalist id="cats">'+CATS.map(function(c){return '<option value="'+esc(c)+'">';}).join("")+'</datalist>';
+  h+='<div class="chsearch"><input id="choresearch" data-action="chsearch" placeholder="Поиск дела по названию или разделу…" value="'+esc(choreQuery)+'"></div>';
   state.chores.forEach(function(c){ h+=choreRow(c); });
   h+='<div class="addrow"><input id="newtitle" placeholder="Новое дело…" maxlength="80"><button class="btn" data-action="add">Добавить</button></div>';
   return h+'</div></div></div>';
@@ -890,27 +949,49 @@ function modeHint(){
   if(state.mode==="rotate")return "Одни и те же дела переходят от одного к другому по чётным/нечётным дням.";
   return "У каждого свои закреплённые дела (выбор ниже). Незакреплённые делятся поровну по усилиям.";
 }
+function scheduleSummary(c){
+  if(isReactive(c)){ var t=getChore(c.after.on),dd=Math.round(c.after.delayDays||0); return 'после: '+(t?t.title:'?')+(dd>0?' +'+dd+'д':''); }
+  var f=c.freq||{t:"daily"};
+  if(f.t==="daily") return (c.perDay>1?(c.perDay+'× в день'):'каждый день');
+  if(f.t==="dow"){ var ds=(f.d||[]).slice().sort(function(a,b){return ((a+6)%7)-((b+6)%7);}); return ds.length?ds.map(function(d){return WD[d];}).join(' '):'дни не выбраны'; }
+  if(f.t==="everyN"){ var n=f.n||1,m={7:'раз в неделю',30:'раз в месяц',91:'раз в квартал',182:'раз в полгода',365:'раз в год'}; return m[n]||('раз в '+n+' дн.'); }
+  if(f.t==="once") return 'разово'+(f.date?' · '+f.date:'');
+  return 'каждый день';
+}
 function choreRow(c){
-  var f=c.freq||{t:"daily"},pd=c.perDay||1;
-  var h='<div class="mrow" data-cid="'+c.id+'"><div class="m-main">';
-  h+='<input class="m-title" data-action="title" data-cid="'+c.id+'" value="'+esc(c.title)+'" maxlength="80">';
-  h+='<input class="m-why" data-action="why" data-cid="'+c.id+'" value="'+esc(c.why||"")+'" placeholder="почему такая оценка (напр. ≈15 мин, физически тяжело)" maxlength="120">';
-  h+='<div class="m-line"><span class="lbl">Усилия</span><span class="pts">';
+  var editing=(ui.editing===c.id);
+  var h='<div class="mrow'+(editing?' open':'')+'" data-cid="'+c.id+'" data-title="'+esc((c.title||"").toLowerCase())+'" data-cat="'+esc((c.cat||"").toLowerCase())+'">';
+  h+='<button class="mrc" data-action="edit-chore" data-cid="'+c.id+'"><span class="mrc-t">'+esc(c.title)+'</span>';
+  h+='<span class="mrc-s"><span class="chip eff">'+fmtPts(c.points)+' · '+esc(effWord(c.points))+'</span><span class="mrc-when">'+esc(scheduleSummary(c))+'</span>'+(c.cat?'<span class="chip">'+esc(c.cat)+'</span>':'')+'</span>';
+  h+='<span class="mrc-chev">'+CARET+'</span></button>';
+  if(editing) h+=choreEditor(c);
+  return h+'</div>';
+}
+function choreEditor(c){
+  var f=c.freq||{t:"daily"},pd=c.perDay||1,reactive=isReactive(c);
+  var h='<div class="m-edit">';
+  h+='<label class="fl">Название</label><input class="m-title" data-action="title" data-cid="'+c.id+'" value="'+esc(c.title)+'" maxlength="80">';
+  h+='<label class="fl">Почему такая оценка</label><input class="m-why" data-action="why" data-cid="'+c.id+'" value="'+esc(c.why||"")+'" placeholder="напр. ≈15 мин, физически тяжело" maxlength="120">';
+  h+='<label class="fl">Усилия</label><div class="m-line wrap"><span class="pts">';
   PTS.forEach(function(v){ h+='<button class="'+(c.points===v?'on':'')+'" data-action="pts" data-cid="'+c.id+'" data-val="'+v+'">'+fmtPts(v)+'</button>'; });
   h+='</span><input class="m-num tnum" type="number" min="0.5" max="20" step="0.5" data-action="ptsnum" data-cid="'+c.id+'" value="'+fmtPts(c.points)+'"><span class="effword">'+esc(effWord(c.points))+'</span></div>';
-  var reactive=isReactive(c);
-  if(!reactive){ h+='<div class="m-line"><span class="lbl">Раз в день</span><input class="m-num tnum" type="number" min="1" max="12" step="1" data-action="perday" data-cid="'+c.id+'" value="'+pd+'"><span class="lbl" style="margin-left:6px">Итого за день</span><span class="effword">'+fmtPts(effortOf(c))+' ус.</span></div>'; }
-  h+='<div class="m-line"><span class="lbl">Когда</span><select data-action="ftype" data-cid="'+c.id+'">';
+  if(!reactive){ h+='<label class="fl">Сколько раз в день</label><div class="m-line"><input class="m-num tnum" type="number" min="1" max="12" step="1" data-action="perday" data-cid="'+c.id+'" value="'+pd+'"><span class="effword">итого '+fmtPts(effortOf(c))+' ус./день</span></div>'; }
+  h+='<label class="fl">Когда</label><select class="m-sel" data-action="ftype" data-cid="'+c.id+'">';
   [["daily","Каждый день"],["dow","По дням недели"],["everyN","Цикл (раз в N дней)"],["once","Разовая (дата)"],["after","После другого дела"]].forEach(function(o){ var selv=(o[0]==="after")?reactive:(!reactive&&f.t===o[0]); h+='<option value="'+o[0]+'"'+(selv?' selected':'')+'>'+o[1]+'</option>'; });
   h+='</select>';
-  if(reactive){ h+='<span class="lbl">после</span><select data-action="depon" data-cid="'+c.id+'">'; state.chores.forEach(function(o){ if(o.id!==c.id) h+='<option value="'+o.id+'"'+(c.after.on===o.id?' selected':'')+'>'+esc(o.title)+'</option>'; }); h+='</select><span class="lbl">через</span><input class="m-n tnum" type="number" min="0" max="14" step="1" data-action="depdelay" data-cid="'+c.id+'" value="'+Math.round(c.after.delayDays||0)+'"><span class="lbl">дн. (0 = сразу)</span>'; }
-  else if(f.t==="dow"){ h+='<span class="dow">'; WD_ORDER.forEach(function(d){ h+='<button class="'+((f.d||[]).indexOf(d)>=0?'on':'')+'" data-action="dow" data-cid="'+c.id+'" data-d="'+d+'">'+WD[d]+'</button>'; }); h+='</span>'; }
-  else if(f.t==="everyN"){ h+='<span class="lbl">каждые</span><input class="m-n tnum" type="number" min="1" max="365" data-action="everyn" data-cid="'+c.id+'" value="'+(f.n||1)+'"><span class="lbl">дн.</span><span class="cyc">'; [["нед",7],["мес",30],["кв",91],["полгода",182],["год",365]].forEach(function(pr){ h+='<button class="cycb'+((f.n||1)===pr[1]?' on':'')+'" data-action="cyc" data-cid="'+c.id+'" data-n="'+pr[1]+'">'+pr[0]+'</button>'; }); h+='</span>'; }
-  else if(f.t==="once"){ h+='<span class="lbl">дата</span><input class="m-cat" type="date" data-action="oncedate" data-cid="'+c.id+'" value="'+esc(f.date||todayStr())+'">'; }
-  h+='<input class="m-cat" list="cats" data-action="cat" data-cid="'+c.id+'" value="'+esc(c.cat||"")+'" placeholder="раздел">';
-  if(state.mode==="fixed"){ h+='<select data-action="owner" data-cid="'+c.id+'"><option value="">Авто</option>'; state.people.forEach(function(p){ h+='<option value="'+p.id+'"'+(c.owner===p.id?' selected':'')+'>'+esc(p.name)+'</option>'; }); h+='</select>'; }
-  h+='</div></div><div class="m-side"><button class="del" data-action="del" data-cid="'+c.id+'">Удалить</button></div></div>';
-  return h;
+  if(reactive){ h+='<div class="m-line wrap"><span class="lbl">после дела</span><select class="m-sel" data-action="depon" data-cid="'+c.id+'">'; state.chores.forEach(function(o){ if(o.id!==c.id) h+='<option value="'+o.id+'"'+(c.after.on===o.id?' selected':'')+'>'+esc(o.title)+'</option>'; }); h+='</select><span class="lbl">через</span><input class="m-n tnum" type="number" min="0" max="14" step="1" data-action="depdelay" data-cid="'+c.id+'" value="'+Math.round(c.after.delayDays||0)+'"><span class="lbl">дн. (0 = сразу)</span></div>'; }
+  else if(f.t==="dow"){ h+='<div class="dow">'; WD_ORDER.forEach(function(d){ h+='<button class="'+((f.d||[]).indexOf(d)>=0?'on':'')+'" data-action="dow" data-cid="'+c.id+'" data-d="'+d+'">'+WD[d]+'</button>'; }); h+='</div>'; }
+  else if(f.t==="everyN"){ h+='<div class="m-line wrap"><span class="lbl">каждые</span><input class="m-n tnum" type="number" min="1" max="365" data-action="everyn" data-cid="'+c.id+'" value="'+(f.n||1)+'"><span class="lbl">дн.</span><span class="cyc">'; [["нед",7],["мес",30],["кв",91],["полгода",182],["год",365]].forEach(function(pr){ h+='<button class="cycb'+((f.n||1)===pr[1]?' on':'')+'" data-action="cyc" data-cid="'+c.id+'" data-n="'+pr[1]+'">'+pr[0]+'</button>'; }); h+='</span></div>'; }
+  else if(f.t==="once"){ h+='<input class="m-cat" type="date" data-action="oncedate" data-cid="'+c.id+'" value="'+esc(f.date||todayStr())+'">'; }
+  h+='<label class="fl">Раздел</label><input class="m-cat" list="cats" data-action="cat" data-cid="'+c.id+'" value="'+esc(c.cat||"")+'" placeholder="напр. Кухня, Уборка">';
+  if(state.mode==="fixed"){ h+='<label class="fl">Закреплено за</label><select class="m-sel" data-action="owner" data-cid="'+c.id+'"><option value="">Авто</option>'; state.people.forEach(function(p){ h+='<option value="'+p.id+'"'+(c.owner===p.id?' selected':'')+'>'+esc(p.name)+'</option>'; }); h+='</select>'; }
+  h+='<div class="m-edit-foot"><button class="del" data-action="del" data-cid="'+c.id+'">Удалить дело</button></div>';
+  return h+'</div>';
+}
+function applyChoreFilter(){
+  var qy=(choreQuery||"").trim().toLowerCase();
+  var rows=root.querySelectorAll('.mrow[data-cid]');
+  for(var i=0;i<rows.length;i++){ var t=rows[i].getAttribute('data-title')||'',ct=rows[i].getAttribute('data-cat')||''; rows[i].style.display=(!qy||t.indexOf(qy)>=0||ct.indexOf(qy)>=0)?'':'none'; }
 }
 
 function statusText(){ return {idle:"",saving:"Сохранение…",saved:"Синхронизировано",offline:"Оффлайн — сохранится, когда появится связь",local:"Локально на этом устройстве (Firebase не настроен)",error:"Ошибка сохранения, повтор…"}[statusName]||""; }
@@ -950,6 +1031,8 @@ root.addEventListener("click",function(e){
   if(a==="cyc"){ commit({t:"edit",id:cid,patch:{freq:{t:"everyN",n:+t.getAttribute("data-n"),anchor:(getChore(cid).freq.anchor||todayStr())}}}); return; }
   if(a==="del"){ if(t.classList.contains("arm")){ commit({t:"del",id:cid}); } else { t.classList.add("arm"); t.textContent="Точно?"; setTimeout(function(){ if(t){t.classList.remove("arm");t.textContent="Удалить";} },2600); } return; }
   if(a==="add"){ var inp=document.getElementById("newtitle"),v=(inp&&inp.value||"").trim(); if(!v)return; commit({t:"add",chore:{id:uid(),title:v,points:1,perDay:1,cat:"",why:"",freq:{t:"daily"}}}); return; }
+  if(a==="edit-chore"){ ui.editing=(ui.editing===cid?null:cid); saveUI(); render(); return; }
+  if(a==="an-details"){ ui.anDetails=!ui.anDetails; saveUI(); render(); return; }
   if(a==="help"){ showHelp(); return; }
 });
 root.addEventListener("change",function(e){
@@ -966,6 +1049,7 @@ root.addEventListener("change",function(e){
   if(a==="owner"){ commit({t:"edit",id:cid,patch:{owner:t.value||undefined}}); return; }
 });
 root.addEventListener("input",function(e){
+  var cs=e.target.closest('[data-action="chsearch"]'); if(cs){ choreQuery=cs.value; applyChoreFilter(); return; }
   var t=e.target.closest('[data-action="cap"]'); if(!t)return;
   var v=Math.max(0,Math.min(100,+t.value||50)),row=t.closest(".caprow");
   if(row){ var l1=row.querySelector(".caplab.p1"),l2=row.querySelector(".caplab.p2"); if(l1)l1.textContent=getPerson("p1").name+" "+v+"%"; if(l2)l2.textContent=getPerson("p2").name+" "+(100-v)+"%"; }
