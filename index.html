@@ -100,7 +100,7 @@ h1,h2,h3{margin:0}
 .col-h b{font-family:var(--font-display);font-weight:600;font-size:16px;color:var(--pc-ink)}
 .col-h .mini{font-size:12.5px;font-weight:600;color:var(--pc-ink);opacity:.9}
 .tasks{list-style:none;margin:0;padding:6px}
-.task{display:flex;align-items:flex-start;gap:10px;padding:9px 8px;border-radius:11px;transition:background .12s}
+.task{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;padding:9px 8px;border-radius:11px;transition:background .12s}
 .task + .task{border-top:1px solid var(--line-2)}
 .task:hover{background:rgba(255,255,255,.4)}
 .ck{flex:0 0 auto;width:25px;height:25px;border-radius:8px;border:2px solid var(--pc);background:transparent;display:grid;place-items:center;padding:0;margin-top:1px;transition:.12s}
@@ -125,7 +125,16 @@ h1,h2,h3{margin:0}
 .reps .rb{border:0;background:transparent;color:var(--cy-ink);width:22px;height:22px;font-size:15px;font-weight:700;padding:0;line-height:1}
 .reps .rb:active{background:rgba(6,182,212,.2)}
 .reps .rn{font-size:11.5px;font-weight:700;color:var(--cy-ink);padding:0 5px;white-space:nowrap}
-.acts{flex:0 0 auto;display:flex;flex-direction:column;gap:4px}
+.acts{flex-basis:100%;order:9;display:flex;flex-flow:row wrap;gap:6px;margin:5px 0 1px 35px}
+.ck.ro{cursor:default}
+.ck.ro.skip{border-color:var(--warn)}
+.ch-l{display:flex;align-items:center;gap:8px;min-width:0}
+.ro-tag{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);background:rgba(14,60,70,.07);padding:2px 7px;border-radius:999px;white-space:nowrap}
+.col.ro-col{opacity:.98}
+.snoozed{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:2px 6px 0;padding:9px 13px;border:1px dashed var(--cy);background:var(--cy-soft);border-radius:12px}
+.sz-lb{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--cy-ink)}
+.sz-lb svg{width:14px;height:14px}
+.sz-item{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text);background:rgba(255,255,255,.65);border-radius:8px;padding:3px 5px 3px 10px}
 .mini-btn{border:1px solid var(--line);background:var(--field);color:var(--muted);border-radius:8px;height:28px;min-width:30px;padding:0 7px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;justify-content:center;transition:.12s;white-space:nowrap}
 .mini-btn:hover{color:var(--text);border-color:var(--faint)}
 .mini-btn svg{width:13px;height:13px}
@@ -517,6 +526,7 @@ function applyOp(o){
   else if(o.t==="assign"){ if(!state.overrides[s])state.overrides[s]={}; state.overrides[s][o.cid]=o.to; }
   else if(o.t==="reset-ov"){ delete state.overrides[s]; }
   else if(o.t==="snooze"){ var nd=addDays(s,1); if(!state.moved[s])state.moved[s]={}; state.moved[s][o.cid]=1; if(!state.extra[nd])state.extra[nd]={}; state.extra[nd][o.cid]=1; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
+  else if(o.t==="unsnooze"){ var un=addDays(s,1); if(state.moved[s]){ delete state.moved[s][o.cid]; if(!Object.keys(state.moved[s]).length)delete state.moved[s]; } if(state.extra[un]){ delete state.extra[un][o.cid]; if(!Object.keys(state.extra[un]).length)delete state.extra[un]; } }
   else if(o.t==="cap"){ if(!state.capacity)state.capacity={}; state.capacity.p1=o.p1; }
   else if(o.t==="mode"){ state.mode=o.mode; }
   else if(o.t==="rename"){ var p=getPerson(o.pid); if(p)p.name=o.name; }
@@ -557,7 +567,7 @@ function render(){
 
   html+='<div class="sec"><div class="sec-h"><h2>Сегодня</h2><div class="ln"></div></div><div class="cols">';
   order.forEach(function(pid){ html+=todayColHTML(pid,comp,s); });
-  html+='</div></div>';
+  html+='</div>'+snoozeStripHTML(s)+'</div>';
 
   html+=calendarHTML();
   html+=analyticsHTML();
@@ -580,34 +590,46 @@ function balanceHTML(s,comp){
     h+='<div class="split">';
     h+='<span class="s1" style="flex:'+t.p1+' '+t.p1+' 0%">'+(lp.p1>=16?esc(n1)+' '+lp.p1+'%':(lp.p1>=8?lp.p1+'%':''))+'</span>';
     h+='<span class="s2" style="flex:'+t.p2+' '+t.p2+' 0%">'+(lp.p2>=16?esc(n2)+' '+lp.p2+'%':(lp.p2>=8?lp.p2+'%':''))+'</span></div>';
-    h+='<div class="legend">'+esc(n1)+' — '+fmtPts(t.p1)+' ('+lp.p1+'%) · '+esc(n2)+' — '+fmtPts(t.p2)+' ('+lp.p2+'%). Передавайте дела «→», а «⊘ не буду» освобождает усилия (уходят в аналитику).</div>';
+    h+='<div class="legend">'+esc(n1)+' — '+fmtPts(t.p1)+' ('+lp.p1+'%) · '+esc(n2)+' — '+fmtPts(t.p2)+' ('+lp.p2+'%). Отмечайте только свои дела — вверху переключается «Это я». Кнопки под делом: «Передать» — отдать второму, «Завтра» — перенести на завтра, «Не буду» — снять с себя (усилия уходят в аналитику).</div>';
   }
   return h+'</div>';
 }
 
+function dativeName(nm){ var m={"Маша":"Маше","Егор":"Егору","Маши":"Маше"}; return m[nm]||nm; }
+function snoozeStripHTML(s){
+  var mv=state.moved[s]; if(!mv)return"";
+  var ids=Object.keys(mv).filter(function(id){ return getChore(id); });
+  if(!ids.length)return"";
+  var h='<div class="snoozed"><span class="sz-lb">'+IC_CLOCK+' Перенесено на завтра:</span>';
+  ids.forEach(function(id){ var c=getChore(id); h+='<span class="sz-item">'+esc(c.title)+'<button class="mini-btn restore" data-action="unsnooze" data-cid="'+id+'" data-date="'+s+'" title="Вернуть на сегодня">'+IC_ARROW+' Вернуть</button></span>'; });
+  return h+'</div>';
+}
 function todayColHTML(pid,comp,s){
   var p=getPerson(pid),pr=progress(pid,s,comp),other=pid==="p1"?"p2":"p1";
-  var h='<div class="col glass" style="'+pcVars(pid)+'"><div class="col-h"><b>'+esc(p.name)+'</b><span class="mini tnum">'+(pr.empty?'—':(pr.countDone+'/'+pr.count+' дел · '+fmtPts(pr.done)+'/'+fmtPts(pr.tot)+' ус.'))+'</span></div>';
+  var interactive=(pid===ui.me);
+  var h='<div class="col glass'+(interactive?'':' ro-col')+'" style="'+pcVars(pid)+'"><div class="col-h"><span class="ch-l"><b>'+esc(p.name)+'</b>'+(interactive?'':'<span class="ro-tag">только просмотр</span>')+'</span><span class="mini tnum">'+(pr.empty?'—':(pr.countDone+'/'+pr.count+' дел · '+fmtPts(pr.done)+'/'+fmtPts(pr.tot)+' ус.'))+'</span></div>';
   var mine=tasksFor(pid,comp,s);
   if(!mine.length){ return h+'<div class="empty">Свободно сегодня</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
     var sk=isSkipped(s,c.id),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=u>=pd,ok=full&&!sk;
     h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+'">';
-    if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+'</button>'; }
+    if(!interactive){ h+='<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
+    else if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
     else if(pd>1){ h+='<div class="step'+(full?' full':'')+'"><button data-action="dec" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Меньше">−</button><span class="n tnum">'+u+'/'+pd+'</span><button data-action="inc" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Больше">+</button></div>'; }
     else{ h+='<button class="ck" data-action="units" data-cid="'+c.id+'" data-date="'+s+'" data-val="'+(u?0:1)+'" aria-label="Отметить">'+CHECK+'</button>'; }
     h+='<div class="tbody"><div class="tt">'+esc(c.title)+'</div>';
     if(c.why)h+='<div class="why">'+esc(c.why)+'</div>';
     h+='<div class="meta"><span class="chip eff">'+fmtPts(c.points)+' · '+esc(effWord(c.points))+'</span>';
-    if(isReactive(c)){ h+='<span class="chip rep">'+esc(depLabel(c))+'</span>'; } else { h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
+    if(isReactive(c)){ h+='<span class="chip rep">'+esc(depLabel(c))+'</span>'; }
+    else if(interactive){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
+    else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
     if(sk)h+='<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
-    if(state.extra[s]&&state.extra[s][c.id])h+='<span class="chip moved">перенесено</span>';
     h+='</div></div>';
-    if(!sk){ h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+'</button>';
-      if(!isReactive(c)) h+='<button class="mini-btn" data-action="snooze" data-cid="'+c.id+'" data-date="'+s+'" title="Перенести на завтра">'+IC_CLOCK+'</button>';
-      h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+'</button></div>'; }
+    if(interactive&&!sk){ h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+' Передать '+esc(dativeName(getPerson(other).name))+'</button>';
+      if(!isReactive(c)) h+='<button class="mini-btn" data-action="snooze" data-cid="'+c.id+'" data-date="'+s+'" title="Перенести на завтра">'+IC_CLOCK+' Завтра</button>';
+      h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+' Не буду</button></div>'; }
     h+='</li>';
   });
   return h+'</ul></div>';
@@ -795,6 +817,7 @@ root.addEventListener("click",function(e){
   if(a==="unskip"){ commit({t:"skip",s:date,cid:cid,on:false}); return; }
   if(a==="swap"){ commit({t:"assign",s:date,cid:cid,to:t.getAttribute("data-to")}); return; }
   if(a==="snooze"){ commit({t:"snooze",s:date,cid:cid}); return; }
+  if(a==="unsnooze"){ commit({t:"unsnooze",s:date,cid:cid}); return; }
   if(a==="reset-ov"){ commit({t:"reset-ov",s:todayStr()}); return; }
   if(a==="week"){ var dd=t.getAttribute("data-d"); ui.weekOffset=(dd==="0")?0:(ui.weekOffset+(+dd)); saveUI(); render(); return; }
   if(a==="anper"){ ui.anPeriod=+t.getAttribute("data-n"); saveUI(); render(); return; }
@@ -847,7 +870,7 @@ function showHelp(){
   var m=document.getElementById("hcmodal"); if(m){ m.remove(); return; }
   m=document.createElement("div"); m.id="hcmodal";
   m.setAttribute("style","position:fixed;inset:0;background:rgba(8,30,36,.5);display:grid;place-items:center;z-index:50;padding:18px");
-  m.innerHTML='<div class="glass" style="max-width:430px;padding:22px 24px;font-size:14.5px;line-height:1.5"><div style="font-family:var(--font-display);font-weight:600;font-size:19px;margin-bottom:10px;color:var(--ink)">Общий доступ вдвоём</div><div style="color:var(--muted)">Откройте эту страницу по одной и той же ссылке на обоих телефонах — данные синхронизируются автоматически через ваш Firebase.<br><br>На каждом устройстве вверху выберите «Это я» — так каждый видит свой список первым. Отметки, переносы и настройки сразу видны обоим.</div><div style="text-align:right;margin-top:16px"><button class="btn" data-action="help">Понятно</button></div></div>';
+  m.innerHTML='<div class="glass" style="max-width:430px;padding:22px 24px;font-size:14.5px;line-height:1.5"><div style="font-family:var(--font-display);font-weight:600;font-size:19px;margin-bottom:10px;color:var(--ink)">Общий доступ вдвоём</div><div style="color:var(--muted)">Откройте эту страницу по одной и той же ссылке на обоих телефонах — данные синхронизируются автоматически через ваш Firebase.<br><br>На каждом устройстве вверху выберите «Это я» (Егор или Маша). Свой список идёт первым, и отмечать выполненное можно только в нём — колонка второго показана как «только просмотр», чтобы случайно не трогать чужие дела.<br><br>Под каждым своим делом три кнопки: «Передать» — отдать дело второму, «Завтра» — перенести на завтра (появится в полосе «Перенесено», можно вернуть), «Не буду» — снять с себя (усилия учтутся в аналитике). Отметки, переносы и настройки сразу видны обоим.</div><div style="text-align:right;margin-top:16px"><button class="btn" data-action="help">Понятно</button></div></div>';
   m.addEventListener("click",function(ev){ if(ev.target===m)m.remove(); });
   document.body.appendChild(m);
 }
