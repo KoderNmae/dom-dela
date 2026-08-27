@@ -149,6 +149,12 @@ h1,h2,h3{margin:0}
 .disp-form{align-items:center}
 .disp-input{flex:1 1 140px;min-width:90px;height:28px;border:1px solid var(--line);border-radius:8px;padding:0 9px;font-size:12.5px;font-family:inherit;background:var(--field);color:var(--text)}
 .disp-input:focus{outline:none;border-color:var(--cy)}
+.task.pending .tt{color:var(--muted)}
+.pstat{flex:0 0 auto;width:25px;height:25px;border-radius:8px;border:1.5px dashed var(--faint);color:var(--muted);display:grid;place-items:center;margin-top:1px}
+.pstat svg{width:13px;height:13px}
+.chip.pend{color:var(--muted);background:transparent;border:1px dashed var(--faint)}
+.calitem.pend{opacity:.72}
+.calitem.pend .cd{color:var(--muted)}
 .offnote{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--cy-ink);background:var(--cy-soft);border-radius:10px;padding:8px 12px;margin:2px 0 10px}
 .offbox{border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-top:10px}
 .offname{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--pc-ink);margin-bottom:4px}
@@ -439,13 +445,23 @@ function lastNDays(n){ var t=todayStr(),a=[]; for(var i=n-1;i>=0;i--)a.push(addD
 /* ---------- effort ---------- */
 function effortOf(c){ return (c.points||0)*(c.perDay||1); }
 function isReactive(c){ return !!(c.after&&c.after.on); }
-function targetOf(c,s){
+function outstandingOf(c,s){
   if(!isReactive(c)) return c.perDay||1;
   var W=45,dd=Math.max(0,Math.round(c.after.delayDays||0)),trig=c.after.on,tot=0,dep=0,k;
   for(k=dd;k<=W;k++) tot+=unitsOf(addDays(s,-k),trig);
   for(k=1;k<=W;k++) dep+=unitsOf(addDays(s,-k),c.id);
   var tg=tot-dep; return tg>0?tg:0;
 }
+function targetOf(c,s){ return isReactive(c)?outstandingOf(c,s):(c.perDay||1); }
+var _pvDepth=0;
+function previewOf(c,s){
+  if(!isReactive(c)||outstandingOf(c,s)>0||_pvDepth>6) return 0;
+  var dd=Math.max(0,Math.round(c.after.delayDays||0)),trig=getChore(c.after.on);
+  if(!trig) return 0;
+  _pvDepth++; var occ=occursOn(trig,addDays(s,-dd)); _pvDepth--;
+  return occ?(trig.perDay||1):0;
+}
+function isPending(c,s){ return isReactive(c)&&outstandingOf(c,s)===0&&previewOf(c,s)>0; }
 function effortAt(c,s){ return (c.points||0)*targetOf(c,s); }
 function byEffDescOn(s){ return function(a,b){ return (effortAt(b,s)-effortAt(a,s))||(a.id<b.id?-1:1); }; }
 function depLabel(c){ var t=getChore(c.after.on),nm=t?t.title:'?',dd=Math.round(c.after.delayDays||0); return 'после: '+nm+(dd>0?' +'+dd+'д':''); }
@@ -461,7 +477,7 @@ function isDue(c,s){
   if(f.t==="once")return f.date===s;
   return true;
 }
-function occursOn(c,s){ if(isReactive(c)) return targetOf(c,s)>0; if(state.extra[s]&&state.extra[s][c.id])return true; if(state.moved[s]&&state.moved[s][c.id])return false; return isDue(c,s); }
+function occursOn(c,s){ if(isReactive(c)) return outstandingOf(c,s)>0||previewOf(c,s)>0; if(state.extra[s]&&state.extra[s][c.id])return true; if(state.moved[s]&&state.moved[s][c.id])return false; return isDue(c,s); }
 function byEffDesc(a,b){ return (effortOf(b)-effortOf(a))||(a.id<b.id?-1:1); }
 function shares(){ var p1=(state.capacity&&typeof state.capacity.p1==="number")?state.capacity.p1:50; p1=Math.max(0,Math.min(100,p1)); return {p1:p1/100,p2:(100-p1)/100}; }
 function balanceInto(list,assign,di,totals,s){
@@ -497,6 +513,7 @@ function computeAssignments(s){
   } else {
     balanceInto(due.slice().sort(cmp),assign,di,{p1:0,p2:0},s);
   }
+  for(var fp=0;fp<3;fp++){ due.forEach(function(c){ if(isReactive(c)&&targetOf(c,s)===0){ var tg=c.after&&c.after.on; if(tg&&assign[tg]&&assign[c.id]!==assign[tg])assign[c.id]=assign[tg]; } }); }
   var ov=state.overrides[s];
   if(ov){ due.forEach(function(c){ if(ov[c.id])assign[c.id]=ov[c.id]; }); }
   return {due:due,assign:assign};
@@ -511,12 +528,13 @@ function dayTotals(comp,s){
 function loadPct(comp,s){ var t=dayTotals(comp,s); if(!t.total)return{p1:50,p2:50,t:t}; var a=Math.round(t.p1/t.total*100); return{p1:a,p2:100-a,t:t}; }
 function progress(pid,s,comp){
   var tot=0,dn=0,cnt=0,cdone=0;
-  comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id))return; var tg=targetOf(c,s),e=(c.points||0)*tg,u=Math.min(tg,unitsOf(s,c.id)); tot+=e; dn+=(c.points||0)*u; cnt++; if(u>=tg)cdone++; });
+  comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id)||isPending(c,s))return; var tg=targetOf(c,s),e=(c.points||0)*tg,u=Math.min(tg,unitsOf(s,c.id)); tot+=e; dn+=(c.points||0)*u; cnt++; if(u>=tg)cdone++; });
   return {tot:tot,done:dn,pct:tot?Math.round(dn/tot*100):100,empty:cnt===0,remaining:tot-dn,count:cnt,countDone:cdone};
 }
 function tasksFor(pid,comp,s){
   var arr=comp.due.filter(function(c){ return comp.assign[c.id]===pid; });
-  arr.sort(function(a,b){ var da=(unitsOf(s,a.id)>=targetOf(a,s)||isSkipped(s,a.id))?1:0, db=(unitsOf(s,b.id)>=targetOf(b,s)||isSkipped(s,b.id))?1:0; return da-db||byEffDescOn(s)(a,b); });
+  function _rk(c){ if(isPending(c,s))return 1; return (unitsOf(s,c.id)>=targetOf(c,s)||isSkipped(s,c.id))?2:0; }
+  arr.sort(function(a,b){ return _rk(a)-_rk(b)||byEffDescOn(s)(a,b); });
   return arr;
 }
 
@@ -634,7 +652,7 @@ function render(){
 function balanceHTML(s,comp){
   var lp=loadPct(comp,s),t=lp.t,hasOv=!!state.overrides[s],n1=getPerson("p1").name,n2=getPerson("p2").name;
   var h='<div class="balance glass"><div class="bh"><span class="t">Загрузка на сегодня</span>';
-  h+='<span class="meta tnum">всего '+fmtPts(t.total)+' усилий · '+comp.due.length+' дел'+((t.skip1+t.skip2)>0?' · пропущено '+fmtPts(t.skip1+t.skip2):'')+'</span>';
+  h+='<span class="meta tnum">всего '+fmtPts(t.total)+' усилий · '+comp.due.filter(function(c){return !isPending(c,s);}).length+' дел'+((t.skip1+t.skip2)>0?' · пропущено '+fmtPts(t.skip1+t.skip2):'')+'</span>';
   if(hasOv)h+='<button class="reset" data-action="reset-ov">Сбросить к авто</button>';
   h+='</div>';
   ["p1","p2"].forEach(function(pid){ var oi=offInfo(pid,s); if(oi){ var oth=pid==="p1"?"p2":"p1"; h+='<div class="offnote">'+esc(getPerson(pid).name)+(oi==="отдых"?" сегодня отдыхает":" сейчас не выполняет")+' — все дела берёт '+esc(getPerson(oth).name)+'</div>'; } });
@@ -667,12 +685,13 @@ function todayColHTML(pid,comp,s){
   if(!mine.length){ var oi=offInfo(pid,s); var em=(oi==="отдых")?('Выходной · дела у '+esc(genName(getPerson(other).name))):((oi==="отъезд")?('Не выполняет · дела у '+esc(genName(getPerson(other).name))):'Свободно сегодня'); return h+'<div class="empty">'+em+'</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
-    var sk=isSkipped(s,c.id),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=u>=pd;
+    var sk=isSkipped(s,c.id),pend=isPending(c,s),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=(u>=pd)&&!pend;
     var dsp=state.dispute[s]&&state.dispute[s][c.id], dOpen=dsp&&dsp.st==="open", dDis=dsp&&dsp.st==="disagree";
     var dName=dsp?getPerson(dsp.by).name:'', rsn=(dsp&&dsp.reason)?dsp.reason:'';
     var ok=full&&!sk&&!dOpen;
-    h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+(dsp?' disp':'')+'">';
-    if(dOpen){ h+='<span class="dstat" title="Оспорено — ожидает ответа">!</span>'; }
+    h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+(dsp?' disp':'')+(pend?' pending':'')+'">';
+    if(pend){ h+='<span class="pstat" title="Появится, когда отметят предыдущее дело">'+IC_CLOCK+'</span>'; }
+    else if(dOpen){ h+='<span class="dstat" title="Оспорено — ожидает ответа">!</span>'; }
     else if(!interactive){ h+='<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
     else if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
     else if(pd>1){ h+='<div class="step'+(full?' full':'')+'"><button data-action="dec" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Меньше">−</button><span class="n tnum">'+u+'/'+pd+'</span><button data-action="inc" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Больше">+</button></div>'; }
@@ -683,12 +702,14 @@ function todayColHTML(pid,comp,s){
     if(isReactive(c)){ h+='<span class="chip rep">'+esc(depLabel(c))+'</span>'; }
     else if(interactive&&!dOpen){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
     else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
+    if(pend)h+='<span class="chip pend">ожидает</span>';
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
     if(sk)h+='<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
     if(dOpen)h+='<span class="chip disp">оспорено'+(rsn?' · «'+esc(rsn)+'»':'')+' · '+esc(dName)+'</span>';
     if(dDis)h+='<span class="chip disagree">разногласие'+(rsn?' · «'+esc(rsn)+'»':'')+'</span>';
     h+='</div></div>';
-    if(dOpen){
+    if(pend){ /* ждём триггер — действий пока нет */ }
+    else if(dOpen){
       h+='<div class="acts">';
       if(interactive){ h+='<button class="mini-btn restore" data-action="disp-redo" data-cid="'+c.id+'" data-date="'+s+'" title="Переделал — снова выполнено">'+IC_CHECK2+' Переделал</button><button class="mini-btn" data-action="disp-disagree" data-cid="'+c.id+'" data-date="'+s+'" title="Не согласен — зафиксировать разногласие">Не согласен</button>'; }
       else if(dsp.by===ui.me){ h+='<button class="mini-btn" data-action="disp-resolve" data-cid="'+c.id+'" data-date="'+s+'" title="Отменить свой спор">Отменить спор</button>'; }
@@ -734,9 +755,9 @@ function calDayHTML(s,today){
     h+='<div class="calcol '+pid+'"><div class="cn">'+esc(getPerson(pid).name)+' · '+fmtPts(pid==="p1"?t.p1:t.p2)+' ус.</div>';
     if(!arr.length)h+='<div class="cempty">—</div>';
     else arr.forEach(function(c){
-      var sk=isSkipped(s,c.id),tg=targetOf(c,s),full=unitsOf(s,c.id)>=tg;
-      h+='<div class="calitem'+(full&&!sk?' ok':'')+(sk?' skip':'')+'"><span class="cd">'+esc(c.title)+(tg>1?' <span class="ce">'+tg+'×</span>':'')+'</span><span class="ce">'+fmtPts(effortAt(c,s))+'</span>';
-      if(!isPast&&!sk)h+='<button class="cs" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">→</button>';
+      var sk=isSkipped(s,c.id),pend=isPending(c,s),tg=targetOf(c,s),full=(unitsOf(s,c.id)>=tg)&&!pend;
+      h+='<div class="calitem'+(full&&!sk?' ok':'')+(sk?' skip':'')+(pend?' pend':'')+'"><span class="cd">'+esc(c.title)+(pend?' <span class="ce">ожидает</span>':(tg>1?' <span class="ce">'+tg+'×</span>':''))+'</span><span class="ce">'+(pend?'—':fmtPts(effortAt(c,s)))+'</span>';
+      if(!isPast&&!sk&&!pend)h+='<button class="cs" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">→</button>';
       h+='</div>';
     });
     h+='</div>';
