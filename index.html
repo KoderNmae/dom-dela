@@ -121,6 +121,7 @@ h1,h2,h3{margin:0}
 .chip.eff{color:var(--pc-ink);background:var(--pc-soft);border-color:transparent}
 .chip.rep{color:var(--cy-ink);background:var(--cy-soft);border-color:transparent}
 .chip.skipped{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.chip.cover{color:var(--cy-ink);background:var(--cy-soft);border-color:transparent}
 .reps{display:inline-flex;align-items:center;border:1px solid var(--cy);background:var(--cy-soft);border-radius:7px;overflow:hidden}
 .reps .rb{border:0;background:transparent;color:var(--cy-ink);width:22px;height:22px;font-size:15px;font-weight:700;padding:0;line-height:1}
 .reps .rb:active{background:rgba(6,182,212,.2)}
@@ -564,6 +565,9 @@ function offInfo(pid,s){
   if(aw){ for(var i=0;i<aw.length;i++){ if(aw[i]&&s>=aw[i].from&&s<=aw[i].to)return "отъезд"; } }
   return null;
 }
+/* pid тянет день в одиночку, потому что второй сегодня «не выполняет» (отдых/отъезд) —
+   в такой день отмена дела не считается штрафом для того, кто на подмене. */
+function coveringDay(pid,s){ return isOff(pid==="p1"?"p2":"p1",s); }
 function autoAssign(s,due){
   var assign={},di=dayIndex(s),cmp=byEffDescOn(s);
   var off1=isOff("p1",s),off2=isOff("p2",s);
@@ -634,7 +638,7 @@ function poolTails(){
 function poolDayLabel(d){ var t=todayStr(); if(d===addDays(t,-1))return"вчера"; if(d===addDays(t,-2))return"позавчера"; var dt=parseYMD(d); return WD[dt.getDay()]+", "+dt.getDate()+" "+MONTHS_SH[dt.getMonth()]; }
 function dayTotals(comp,s){
   var t={p1:0,p2:0,skip1:0,skip2:0};
-  comp.due.forEach(function(c){ var pid=comp.assign[c.id],e=effortAt(c,s); if(isSkipped(s,c.id)){ t[pid==="p1"?"skip1":"skip2"]+=e; } else { t[pid]+=e; } });
+  comp.due.forEach(function(c){ var pid=comp.assign[c.id],e=effortAt(c,s); if(isSkipped(s,c.id)){ if(coveringDay(pid,s))return; t[pid==="p1"?"skip1":"skip2"]+=e; } else { t[pid]+=e; } });
   t.total=t.p1+t.p2; return t;
 }
 function loadPct(comp,s){ var t=dayTotals(comp,s); if(!t.total)return{p1:50,p2:50,t:t}; var a=Math.round(t.p1/t.total*100); return{p1:a,p2:100-a,t:t}; }
@@ -658,8 +662,8 @@ function analytics(days){
     ["p1","p2"].forEach(function(pid){
       var A=0,D=0,S=0,active=0;
       comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid)return; var e=effortAt(c,s);
+        if(isSkipped(s,c.id)){ if(coveringDay(pid,s))return; A+=e; S+=e; return; }  /* подмена: отмена без штрафа */
         A+=e;
-        if(isSkipped(s,c.id)){ S+=e; return; }
         active+=e; var u=Math.min(targetOf(c,s),unitsOf(s,c.id)), de=(c.points||0)*u; D+=de;
         if(de>0){ var k=c.cat||"Прочее"; cat[pid][k]=(cat[pid][k]||0)+de; }
       });
@@ -674,7 +678,7 @@ function analytics(days){
     var db=state.debt[s]; if(!db)return;
     for(var cid in db){ var r=db[cid],c=getChore(cid); if(!c||!r||isReactive(c))continue; var eff=effortAt(c,s);
       if(r.st==="done"&&per[r.by]) per[r.by].pooldone+=eff;
-      else if(r.st==="skip"&&per[r.by]) per[r.by].poolskip+=eff;
+      else if(r.st==="skip"&&per[r.by]){ if(!coveringDay(r.by,s)) per[r.by].poolskip+=eff; }
     }
   });
   ["p1","p2"].forEach(function(pid){ var p=per[pid];
@@ -855,7 +859,7 @@ function todayColHTML(pid,comp,s){
     else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
     if(pend)h+='<span class="chip pend">ожидает</span>';
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
-    if(sk)h+='<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
+    if(sk)h+=coveringDay(pid,s)?'<span class="chip cover">снято · подмена</span>':'<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
     if(dOpen)h+='<span class="chip disp">оспорено'+(rsn?' · «'+esc(rsn)+'»':'')+' · '+esc(dName)+'</span>';
     if(dDis)h+='<span class="chip disagree">разногласие'+(rsn?' · «'+esc(rsn)+'»':'')+'</span>';
     h+='</div></div>';
