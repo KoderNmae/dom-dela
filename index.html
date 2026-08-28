@@ -112,6 +112,7 @@ h1,h2,h3{margin:0}
 .step .n{font-size:12px;font-weight:700;color:var(--pc-ink);min-width:30px;text-align:center;padding:0 2px}
 .step.full{background:var(--pc)}
 .step.full button,.step.full .n{color:#fff}
+.step.ro{padding:2px 9px;cursor:default}
 .tbody{flex:1;min-width:0}
 .tt{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
 .task.ok .tt,.task.skip .tt{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
@@ -847,7 +848,7 @@ function todayColHTML(pid,comp,s){
     h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+(dsp?' disp':'')+(pend?' pending':'')+'">';
     if(pend){ h+='<span class="pstat" title="Появится, когда отметят предыдущее дело">'+IC_CLOCK+'</span>'; }
     else if(dOpen){ h+='<span class="dstat" title="Оспорено — ожидает ответа">!</span>'; }
-    else if(!interactive){ h+='<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
+    else if(!interactive){ h+=(pd>1&&!sk)?'<div class="step ro'+(full?' full':'')+'"><span class="n tnum">'+u+'/'+pd+'</span></div>':'<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
     else if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
     else if(pd>1){ h+='<div class="step'+(full?' full':'')+'"><button data-action="dec" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Меньше">−</button><span class="n tnum">'+u+'/'+pd+'</span><button data-action="inc" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Больше">+</button></div>'; }
     else{ h+='<button class="ck" data-action="units" data-cid="'+c.id+'" data-date="'+s+'" data-val="'+(u?0:1)+'" aria-label="Отметить">'+CHECK+'</button>'; }
