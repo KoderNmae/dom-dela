@@ -142,6 +142,26 @@ h1,h2,h3{margin:0}
 .mini-btn.restore{color:var(--cy-ink);border-color:var(--cy)}
 .empty{padding:22px 14px;text-align:center;color:var(--faint);font-size:14px;font-weight:500}
 .dstat{flex:0 0 auto;width:25px;height:25px;border-radius:8px;border:2px solid var(--warn);color:var(--warn);background:var(--warn-soft);display:grid;place-items:center;font-weight:800;font-size:15px;line-height:1;margin-top:1px}
+/* carryover pool */
+.pool{padding:14px 16px}
+.pool-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:6px}
+.pool-t{font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--warn)}
+.pool-cnt{color:var(--faint);font-size:13px;font-weight:600;margin-left:auto}
+.pool-note{color:var(--muted);font-size:12.5px;line-height:1.45;margin-bottom:11px}
+.pool-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pool-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border:1px solid var(--line-2);border-left:3px solid var(--warn);border-radius:11px;background:var(--warn-soft)}
+.pi-body{flex:1;min-width:160px}
+.pi-tt{font-weight:600;font-size:14.5px;line-height:1.25;word-break:break-word}
+.pi-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:5px}
+.pi-meta .chip{background:rgba(255,255,255,.6)}
+.pi-meta .chip.when{color:var(--warn);font-weight:700;border-color:transparent}
+.pi-meta .chip.eff{color:var(--pc-ink);background:var(--pc-soft);border-color:transparent}
+.pi-meta .chip.who{color:var(--pc-ink);background:var(--pc-soft);border-color:transparent}
+.pi-meta .chip.claim{color:var(--pc-ink);background:#fff;border-color:var(--pc)}
+.pi-acts{display:flex;flex-flow:row wrap;gap:6px}
+.pool-item .mini-btn{background:rgba(255,255,255,.78)}
+.mini-btn.done-btn{color:var(--cy-ink);border-color:var(--cy);font-weight:700}
+.mini-btn.done-btn:hover{background:var(--cy-soft)}
 .task.disp{background:rgba(217,119,6,.06)}
 .chip.disp{color:var(--warn);background:var(--warn-soft);border-color:transparent}
 .chip.disagree{color:#fff;background:var(--warn);border-color:transparent}
@@ -368,28 +388,28 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"v":4,"mode":"balanced","capacity":{"p1":50},
 "people":[{"id":"p1","name":"Егор"},{"id":"p2","name":"Маша"}],
 "chores":[
-{"id":"c1","title":"Вынос мусора в мусоропровод","points":1,"perDay":1,"cat":"Мусор","why":"≈2 мин: дойти до мусоропровода на этаже","freq":{"t":"daily"}},
+{"id":"c1","title":"Вынос мусора в мусоропровод","points":0.5,"perDay":1,"cat":"Мусор","why":"≈2 мин: дойти до мусоропровода на этаже","freq":{"t":"daily"}},
 {"id":"c2","title":"Вынос мусора на улицу","points":2,"perDay":1,"cat":"Мусор","why":"≈10 мин: вынести к уличным бакам","freq":{"t":"dow","d":[2,5]}},
-{"id":"c3","title":"Смена пелёнки собаке","points":0.5,"perDay":2,"cat":"Собака","why":"≈1–2 мин за раз, 2 раза в день = 1 усилие","freq":{"t":"daily"}},
+{"id":"c3","title":"Смена пелёнки собаке","points":0.5,"perDay":2,"cat":"Собака","why":"≈1–2 мин за раз, 2 раза в день","freq":{"t":"daily"}},
 {"id":"c4","title":"Поставить посудомоечную машину","points":1,"perDay":2,"cat":"Кухня","why":"≈5 мин за раз, 2 раза в день = 2 усилия","freq":{"t":"daily"}},
 {"id":"c5","title":"Разобрать посудомоечную машину","points":1,"perDay":1,"cat":"Кухня","why":"разложить чистую посуду — по числу загрузок ПММ","freq":{"t":"after"},"after":{"on":"c4","delayDays":0}},
 {"id":"c6","title":"Поставить стирку в машинку","points":1,"perDay":1,"cat":"Стирка","why":"≈5 мин: загрузить, средство, включить","freq":{"t":"dow","d":[1,3,5]}},
 {"id":"c7","title":"Разобрать стирку из машинки","points":1,"perDay":1,"cat":"Стирка","why":"развесить или в сушилку — после стирки","freq":{"t":"after"},"after":{"on":"c6","delayDays":0}},
 {"id":"c8","title":"Снять сухие вещи с сушилки","points":1,"perDay":1,"cat":"Стирка","why":"снять и разложить — через ~2 суток после развешивания","freq":{"t":"after"},"after":{"on":"c7","delayDays":2}},
 {"id":"c9","title":"Помыть посуду руками","points":2,"perDay":1,"cat":"Кухня","why":"≈15 мин: то, что не идёт в машину","freq":{"t":"daily"}},
-{"id":"c10","title":"Разобрать холодильник","points":3,"perDay":1,"cat":"Кухня","why":"≈20–30 мин: выкинуть старое, протереть полки","freq":{"t":"dow","d":[6]}},
+{"id":"c10","title":"Разобрать холодильник","points":2,"perDay":1,"cat":"Кухня","why":"≈20–30 мин: выкинуть старое, протереть полки","freq":{"t":"dow","d":[6]}},
 {"id":"c11","title":"Поставить вещи на свои места","points":2,"perDay":1,"cat":"Уборка","why":"≈15 мин: разложить разбросанное по квартире","freq":{"t":"daily"}},
 {"id":"c12","title":"Убрать мусор поверхностно","points":1,"perDay":1,"cat":"Мусор","why":"≈5 мин: быстро собрать мусор по комнатам","freq":{"t":"daily"}},
-{"id":"c13","title":"Пропылесосить поверхностно","points":2,"perDay":1,"cat":"Уборка","why":"≈15 мин: пройтись по основным зонам","freq":{"t":"dow","d":[2,5]}},
+{"id":"c13","title":"Пропылесосить поверхностно","points":1,"perDay":1,"cat":"Уборка","why":"≈15 мин: пройтись по основным зонам","freq":{"t":"dow","d":[2,5]}},
 {"id":"c14","title":"Пропылесосить генерально","points":3,"perDay":1,"cat":"Уборка","why":"≈30–40 мин: вся квартира, углы, под мебелью","freq":{"t":"dow","d":[6]}},
 {"id":"c15","title":"Помыть зеркала","points":1,"perDay":1,"cat":"Ванная","why":"≈10 мин: все зеркала в доме","freq":{"t":"dow","d":[6]}},
 {"id":"c16","title":"Помыть унитаз","points":2,"perDay":1,"cat":"Ванная","why":"≈10 мин: почистить и протереть","freq":{"t":"dow","d":[3,6]}},
 {"id":"c17","title":"Помыть раковину и ванну","points":3,"perDay":1,"cat":"Ванная","why":"≈25 мин: оттереть налёт, физически тяжело","freq":{"t":"dow","d":[6]}},
 {"id":"c18","title":"Помыть пол","points":3,"perDay":1,"cat":"Уборка","why":"≈30 мин: вымыть полы во всей квартире","freq":{"t":"dow","d":[6]}},
 {"id":"c19","title":"Протереть пыль","points":2,"perDay":1,"cat":"Уборка","why":"≈15–20 мин: протереть все поверхности","freq":{"t":"dow","d":[6]}},
-{"id":"c20","title":"Помыть собачьи миски","points":0.5,"perDay":2,"cat":"Собака","why":"≈3 мин за раз, 2 раза в день = 1 усилие","freq":{"t":"daily"}},
+{"id":"c20","title":"Помыть собачьи миски","points":0.5,"perDay":2,"cat":"Собака","why":"≈3 мин за раз, 2 раза в день","freq":{"t":"daily"}},
 {"id":"c21","title":"Поменять постельное бельё","points":3,"perDay":1,"cat":"Спальня","why":"≈25 мин: снять, застелить, отправить в стирку","freq":{"t":"dow","d":[0]}},
-{"id":"c22","title":"Поменять полотенца","points":1,"perDay":1,"cat":"Ванная","why":"≈5 мин: заменить на свежие","freq":{"t":"dow","d":[0]}},
+{"id":"c22","title":"Поменять полотенца","points":0.5,"perDay":1,"cat":"Ванная","why":"≈5 мин: заменить на свежие","freq":{"t":"dow","d":[0]}},
 {"id":"c23","title":"Помыть окна","points":5,"perDay":1,"cat":"Техника","why":"раз в сезон: все окна и рамы, тяжёлая работа","freq":{"t":"everyN","n":91,"anchor":"2026-09-30"}},
 {"id":"c24","title":"Рассортировать шкаф с бакалеей","points":2,"perDay":1,"cat":"Кухня","why":"≈20 мин: перебрать и разложить запасы","freq":{"t":"everyN","n":14,"anchor":"2026-08-30"}},
 {"id":"c25","title":"Почистить кондиционер","points":3,"perDay":1,"cat":"Техника","why":"раз в год: снять и промыть фильтры, продуть","freq":{"t":"everyN","n":365,"anchor":"2026-09-20"}},
@@ -397,9 +417,9 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"id":"c27","title":"Очистить стиральную машину","points":1,"perDay":1,"cat":"Техника","why":"раз в сезон: лимонная кислота или средство","freq":{"t":"everyN","n":90,"anchor":"2026-09-10"}},
 {"id":"c28","title":"Удалить накипь в чайнике","points":1,"perDay":1,"cat":"Техника","why":"раз в 2 мес: лимонная кислота","freq":{"t":"everyN","n":60,"anchor":"2026-09-12"}},
 {"id":"c29","title":"Помыть микроволновку","points":1,"perDay":1,"cat":"Техника","why":"раз в месяц: пар и протереть","freq":{"t":"everyN","n":30,"anchor":"2026-09-03"}},
-{"id":"c30","title":"Разморозить и помыть холодильник","points":3,"perDay":1,"cat":"Техника","why":"раз в 4 мес: разморозка и полная мойка","freq":{"t":"everyN","n":120,"anchor":"2026-09-25"}},
-{"id":"c31","title":"Пропылесосить и перевернуть матрас","points":2,"perDay":1,"cat":"Спальня","why":"раз в полгода: перевернуть, пропылесосить","freq":{"t":"everyN","n":180,"anchor":"2026-10-01"}},
-{"id":"c32","title":"Протереть плинтусы","points":2,"perDay":1,"cat":"Уборка","why":"≈20–30 мин: пройти плинтусы во всех комнатах","freq":{"t":"everyN","n":14,"anchor":"2026-08-30"}}
+{"id":"c30","title":"Разморозить и помыть холодильник","points":5,"perDay":1,"cat":"Техника","why":"раз в 4 мес: разморозка и полная мойка","freq":{"t":"everyN","n":120,"anchor":"2026-09-25"}},
+{"id":"c31","title":"Пропылесосить и перевернуть матрас","points":3,"perDay":1,"cat":"Спальня","why":"раз в полгода: перевернуть, пропылесосить","freq":{"t":"everyN","n":180,"anchor":"2026-10-01"}},
+{"id":"c32","title":"Протереть плинтусы","points":3,"perDay":1,"cat":"Уборка","why":"≈20–30 мин: пройти плинтусы во всех комнатах","freq":{"t":"everyN","n":14,"anchor":"2026-08-30"}}
 ],
 "overrides":{},"done":{},"skip":{},"moved":{},"extra":{}}
 </script>
@@ -446,6 +466,7 @@ var HEAD=[
 /* ---------- state ---------- */
 var root=document.getElementById("root");
 var state=loadState();
+migrateFreeze();
 var ui=loadUI();
 var saveTimer=null, scrollTimer=null, restored=false, statusName="idle", fbRef=null, fbReady=false, lastWritten=null, online=false;
 
@@ -462,6 +483,8 @@ function normalize(s){
   if(!s.moved) s.moved={};
   if(!s.extra) s.extra={};
   if(!s.dispute) s.dispute={};
+  if(!s.debt) s.debt={};
+  if(!s.frozen) s.frozen={};
   if(!s.restDay) s.restDay={};
   if(!s.away) s.away={};
   ["p1","p2"].forEach(function(pid){ if(s.away[pid]&&!Array.isArray(s.away[pid])) s.away[pid]=Object.keys(s.away[pid]).map(function(k){return s.away[pid][k];}); });
@@ -541,8 +564,7 @@ function offInfo(pid,s){
   if(aw){ for(var i=0;i<aw.length;i++){ if(aw[i]&&s>=aw[i].from&&s<=aw[i].to)return "отъезд"; } }
   return null;
 }
-function computeAssignments(s){
-  var due=state.chores.filter(function(c){ return occursOn(c,s); });
+function autoAssign(s,due){
   var assign={},di=dayIndex(s),cmp=byEffDescOn(s);
   var off1=isOff("p1",s),off2=isOff("p2",s);
   if(off1&&!off2){ due.forEach(function(c){ assign[c.id]="p2"; }); }
@@ -557,12 +579,59 @@ function computeAssignments(s){
     balanceInto(due.slice().sort(cmp),assign,di,{p1:0,p2:0},s);
   }
   for(var fp=0;fp<3;fp++){ due.forEach(function(c){ if(isReactive(c)&&targetOf(c,s)===0){ var tg=c.after&&c.after.on; if(tg&&assign[tg]&&assign[c.id]!==assign[tg])assign[c.id]=assign[tg]; } }); }
-  var ov=state.overrides[s];
+  return assign;
+}
+function computeAssignments(s){
+  var due=state.chores.filter(function(c){ return occursOn(c,s); });
+  var assign=autoAssign(s,due);
+  var fz=state.frozen&&state.frozen[s];          /* день «в работе» — раскладка заморожена */
+  if(fz){ due.forEach(function(c){ if(fz[c.id]!=null)assign[c.id]=fz[c.id]; }); }
+  var ov=state.overrides[s];                      /* ручная передача — поверх всего */
   if(ov){ due.forEach(function(c){ if(ov[c.id])assign[c.id]=ov[c.id]; }); }
   return {due:due,assign:assign};
 }
+/* freeze a day's auto-layout the first time it gets activity, so later effort/config
+   changes only move FUTURE days and never a board the couple is already filling. */
+function freezeDay(s){ if(!state.frozen)state.frozen={}; if(state.frozen[s])return false; var due=state.chores.filter(function(c){ return occursOn(c,s); }); if(!due.length)return false; state.frozen[s]=autoAssign(s,due); return true; }
+function dayHasActivity(s){
+  var src=[state.done,state.skip,state.overrides,state.moved,state.dispute,state.debt],i;
+  for(i=0;i<src.length;i++){ if(src[i]&&src[i][s]&&Object.keys(src[i][s]).length)return true; }
+  return false;
+}
+function migrateFreeze(){
+  var chg=false,seen={},src=[state.done,state.skip,state.overrides,state.moved,state.dispute,state.debt],i,k;
+  for(i=0;i<src.length;i++){ for(k in src[i]){ if(seen[k])continue; seen[k]=1; if(!(state.frozen&&state.frozen[k])&&dayHasActivity(k)){ if(freezeDay(k))chg=true; } } }
+  return chg;
+}
 function unitsOf(s,cid){ var d=state.done[s]; return d&&d[cid]?d[cid]:0; }
 function isSkipped(s,cid){ var k=state.skip[s]; return k&&k[cid]; }
+/* ---------- carryover pool (хвосты) ---------- */
+function firstActivityDate(){ var best=null,src=[state.done,state.skip,state.debt],i,k; for(i=0;i<src.length;i++){ for(k in src[i]){ if(best===null||k<best)best=k; } } return best; }
+function debtOf(d,cid){ var x=state.debt[d]; return x&&x[cid]?x[cid]:null; }
+function isTail(c,d){
+  if(isReactive(c))return false;            /* реактивные тянутся сами через outstandingOf */
+  if(unitsOf(d,c.id)>0)return false;        /* только полностью не тронутые */
+  if(isSkipped(d,c.id))return false;        /* уже сняли «не буду» */
+  if(state.dispute[d]&&state.dispute[d][c.id])return false; /* в споре — свой поток */
+  return occursOn(c,d);
+}
+function poolTails(){
+  var today=todayStr(),fa=firstActivityDate(); if(!fa)return [];
+  var faI=dayIndex(fa),out=[],k,d,comp;
+  for(k=1;k<=7;k++){
+    d=addDays(today,-k);
+    if(dayIndex(d)<faI)break;               /* до первого дня учёта долгов нет */
+    comp=computeAssignments(d);
+    comp.due.forEach(function(c){
+      if(!isTail(c,d))return;
+      var db=debtOf(d,c.id); if(db&&(db.st==="done"||db.st==="skip"))return; /* уже разрешён */
+      out.push({c:c,d:d,who:comp.assign[c.id],claim:(db&&db.st==="claim")?db.by:null,eff:effortAt(c,d)});
+    });
+  }
+  out.sort(function(a,b){ return dayIndex(a.d)-dayIndex(b.d) || (b.eff-a.eff) || (a.c.id<b.c.id?-1:1); });
+  return out;
+}
+function poolDayLabel(d){ var t=todayStr(); if(d===addDays(t,-1))return"вчера"; if(d===addDays(t,-2))return"позавчера"; var dt=parseYMD(d); return WD[dt.getDay()]+", "+dt.getDate()+" "+MONTHS_SH[dt.getMonth()]; }
 function dayTotals(comp,s){
   var t={p1:0,p2:0,skip1:0,skip2:0};
   comp.due.forEach(function(c){ var pid=comp.assign[c.id],e=effortAt(c,s); if(isSkipped(s,c.id)){ t[pid==="p1"?"skip1":"skip2"]+=e; } else { t[pid]+=e; } });
@@ -601,6 +670,13 @@ function analytics(days){
     });
     trend.push({s:s,p1:dp.p1,p2:dp.p2});
   });
+  days.forEach(function(s){
+    var db=state.debt[s]; if(!db)return;
+    for(var cid in db){ var r=db[cid],c=getChore(cid); if(!c||!r||isReactive(c))continue; var eff=effortAt(c,s);
+      if(r.st==="done"&&per[r.by]) per[r.by].pooldone+=eff;
+      else if(r.st==="skip"&&per[r.by]) per[r.by].poolskip+=eff;
+    }
+  });
   ["p1","p2"].forEach(function(pid){ var p=per[pid];
     p.vypoln=p.assigned>0?Math.round(p.done/p.assigned*100):null;
     p.effic=p.kept>0?Math.round(p.done/p.kept*100):null;
@@ -608,7 +684,7 @@ function analytics(days){
   });
   return {per:per,cat:cat,trend:trend};
 }
-function blank(){ return {assigned:0,done:0,skipped:0,kept:0,disputed:0,offdays:0}; }
+function blank(){ return {assigned:0,done:0,skipped:0,kept:0,disputed:0,offdays:0,pooldone:0,poolskip:0}; }
 function streakOf(pid){
   var n=0,s=todayStr(),guard=0;
   while(guard++<400){
@@ -626,6 +702,7 @@ function getChore(id){ for(var i=0;i<state.chores.length;i++)if(state.chores[i].
 function getPerson(id){ for(var i=0;i<state.people.length;i++)if(state.people[i].id===id)return state.people[i]; return null; }
 function applyOp(o){
   var s=o.s,c;
+  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
   if(o.t==="units"||o.t==="toggle"){ var v=(o.t==="toggle")?(o.val?1:0):o.val; if(!state.done[s])state.done[s]={}; if(v>0)state.done[s][o.cid]=v; else delete state.done[s][o.cid]; if(v>0&&state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="skip"){ if(o.on){ if(!state.skip[s])state.skip[s]={}; state.skip[s][o.cid]=o.pid; if(state.done[s])delete state.done[s][o.cid]; } else { if(state.skip[s])delete state.skip[s][o.cid]; } }
   else if(o.t==="assign"){ if(!state.overrides[s])state.overrides[s]={}; state.overrides[s][o.cid]=o.to; }
@@ -635,6 +712,10 @@ function applyOp(o){
   else if(o.t==="dispute"){ if(!state.dispute[s])state.dispute[s]={}; state.dispute[s][o.cid]={by:o.by,reason:o.reason||"",st:"open"}; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="dispute-disagree"){ if(state.dispute[s]&&state.dispute[s][o.cid]){ state.dispute[s][o.cid].st="disagree"; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
   else if(o.t==="dispute-resolve"){ if(state.dispute[s]){ delete state.dispute[s][o.cid]; if(!Object.keys(state.dispute[s]).length)delete state.dispute[s]; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
+  else if(o.t==="debt-done"){ if(!state.debt[s])state.debt[s]={}; state.debt[s][o.cid]={st:"done",by:o.by}; }
+  else if(o.t==="debt-claim"){ if(!state.debt[s])state.debt[s]={}; state.debt[s][o.cid]={st:"claim",by:o.by}; }
+  else if(o.t==="debt-release"){ if(state.debt[s]){ delete state.debt[s][o.cid]; if(!Object.keys(state.debt[s]).length)delete state.debt[s]; } }
+  else if(o.t==="debt-skip"){ if(!state.debt[s])state.debt[s]={}; state.debt[s][o.cid]={st:"skip",by:o.by}; }
   else if(o.t==="restday"){ if(!state.restDay)state.restDay={}; var rnd=(o.d<0)?null:o.d; state.restDay[o.pid]=(state.restDay[o.pid]===rnd)?null:rnd; }
   else if(o.t==="away-add"){ if(!state.away)state.away={}; if(!state.away[o.pid])state.away[o.pid]=[]; state.away[o.pid].push({from:o.from,to:o.to}); }
   else if(o.t==="away-del"){ if(state.away&&state.away[o.pid])state.away[o.pid].splice(o.idx,1); }
@@ -681,6 +762,7 @@ function render(){
   html+='<div class="sec"><div class="sec-h"><h2>Сегодня</h2><div class="ln"></div></div><div class="cols">';
   order.forEach(function(pid){ html+=todayColHTML(pid,comp,s); });
   html+='</div>'+snoozeStripHTML(s)+'</div>';
+  html+=poolHTML(s);
 
   html+=calendarHTML();
   html+=analyticsHTML();
@@ -718,6 +800,32 @@ function snoozeStripHTML(s){
   var h='<div class="snoozed"><span class="sz-lb">'+IC_CLOCK+' Перенесено на завтра:</span>';
   ids.forEach(function(id){ var c=getChore(id); h+='<span class="sz-item">'+esc(c.title)+'<button class="mini-btn restore" data-action="unsnooze" data-cid="'+id+'" data-date="'+s+'" title="Вернуть на сегодня">'+IC_ARROW+' Вернуть</button></span>'; });
   return h+'</div>';
+}
+function poolHTML(s){
+  var tails=poolTails(); if(!tails.length)return"";
+  var tot=tails.reduce(function(a,x){return a+x.eff;},0);
+  var h='<div class="sec"><div class="sec-h"><h2>Несделанные дела</h2><div class="ln"></div></div>';
+  h+='<div class="pool glass"><div class="pool-h"><span class="pool-t">Хвосты за последние дни</span><span class="pool-cnt tnum">'+tails.length+' дел · '+fmtPts(tot)+' ус.</span></div>';
+  h+='<div class="pool-note">Эти дела не сделали в свой день. Можно доделать — усилие зачтётся тому, кто сделал. Или списать — уйдёт в «пропущено». Через 7 дней исчезают сами.</div>';
+  h+='<ul class="pool-list">';
+  tails.forEach(function(x){
+    var c=x.c;
+    h+='<li class="pool-item" style="'+pcVars(x.who)+'">';
+    h+='<div class="pi-body"><div class="pi-tt">'+esc(c.title)+'</div><div class="pi-meta">';
+    h+='<span class="chip when">'+esc(poolDayLabel(x.d))+'</span>';
+    h+='<span class="chip eff">'+fmtPts(x.eff)+' · '+esc(effWord(x.eff))+'</span>';
+    if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
+    if(x.claim)h+='<span class="chip claim">взял'+(x.claim==="p2"?"а":"")+': '+esc(getPerson(x.claim).name)+'</span>';
+    else h+='<span class="chip who">было у '+esc(genName(getPerson(x.who).name))+'</span>';
+    h+='</div></div>';
+    h+='<div class="pi-acts">';
+    h+='<button class="mini-btn done-btn" data-action="debt-done" data-cid="'+c.id+'" data-date="'+x.d+'" title="Я это сделал — зачесть усилие мне">'+IC_CHECK2+' Сделал</button>';
+    if(x.claim===ui.me)h+='<button class="mini-btn" data-action="debt-release" data-cid="'+c.id+'" data-date="'+x.d+'" title="Больше не беру на себя">Передумал</button>';
+    else h+='<button class="mini-btn" data-action="debt-claim" data-cid="'+c.id+'" data-date="'+x.d+'" title="Беру это дело на себя">'+IC_ARROW+' Беру</button>';
+    h+='<button class="mini-btn skip" data-action="debt-skip" data-cid="'+c.id+'" data-date="'+x.d+'" title="Списать — уйдёт в «пропущено»">'+IC_SKIP+' Списать</button>';
+    h+='</div></li>';
+  });
+  return h+'</ul></div></div>';
 }
 function dispKey(s,cid){ return s+"|"+cid; }
 function todayColHTML(pid,comp,s){
@@ -829,12 +937,13 @@ function analyticsHTML(){
   h+='</div>';
   h+='<div class="an-explain">«Доведено до конца» — какую долю доставшихся усилий отметили выполненными. 100% — успели всё, что на них выпало.</div>';
 
-  /* fairness split of DONE effort */
-  var dt=A.per.p1.done+A.per.p2.done, f1=dt?Math.round(A.per.p1.done/dt*100):50, f2=100-f1;
+  /* fairness split of expended effort (incl. picked-up tails) */
+  var ex1=A.per.p1.done+A.per.p1.pooldone, ex2=A.per.p2.done+A.per.p2.pooldone;
+  var dt=ex1+ex2, f1=dt?Math.round(ex1/dt*100):50, f2=100-f1, hasPd=(A.per.p1.pooldone+A.per.p2.pooldone)>0;
   h+='<div class="fair glass"><div class="fl">Кто сколько сделал (за '+N+' дн.)</div>';
   if(dt===0){ h+='<div class="split"><span class="s0">пока нет выполненных дел за период</span></div>'; }
-  else{ h+='<div class="split"><span class="s1" style="flex:'+A.per.p1.done+' '+A.per.p1.done+' 0%">'+(f1>=14?esc(getPerson("p1").name)+' '+f1+'%':'')+'</span><span class="s2" style="flex:'+A.per.p2.done+' '+A.per.p2.done+' 0%">'+(f2>=14?esc(getPerson("p2").name)+' '+f2+'%':'')+'</span></div>';
-    h+='<div class="legend" style="color:var(--muted);font-size:12.5px;margin-top:8px">'+esc(getPerson("p1").name)+' — '+fmtPts(A.per.p1.done)+' усилий · '+esc(getPerson("p2").name)+' — '+fmtPts(A.per.p2.done)+' усилий</div>'; }
+  else{ h+='<div class="split"><span class="s1" style="flex:'+ex1+' '+ex1+' 0%">'+(f1>=14?esc(getPerson("p1").name)+' '+f1+'%':'')+'</span><span class="s2" style="flex:'+ex2+' '+ex2+' 0%">'+(f2>=14?esc(getPerson("p2").name)+' '+f2+'%':'')+'</span></div>';
+    h+='<div class="legend" style="color:var(--muted);font-size:12.5px;margin-top:8px">'+esc(getPerson("p1").name)+' — '+fmtPts(ex1)+' усилий · '+esc(getPerson("p2").name)+' — '+fmtPts(ex2)+' усилий'+(hasPd?' · включая подобранные хвосты':'')+'</div>'; }
   h+='</div>';
 
   /* trend chart */
@@ -851,14 +960,15 @@ function analyticsHTML(){
       h+='<div class="an-card glass '+pid+'" style="'+pcVars(pid)+'"><div class="anh">'+esc(getPerson(pid).name)+'</div><div class="an-kpis">';
       h+=kpi("Досталось усилий",fmtPts(p.assigned),false);
       h+=kpi("Сделано усилий",fmtPts(p.done),false);
+      if(p.pooldone>0)h+=kpi("Подобрано из пула",fmtPts(p.pooldone),false);
       h+=kpi("Без учёта отменённых",p.effic==null?"—":p.effic+"<small>%</small>",true);
-      h+=kpi("Пропущено «не буду»",fmtPts(p.skipped),false);
+      h+=kpi("Пропущено и списано",fmtPts(p.skipped+p.poolskip),false);
       h+=kpi("Оспорено дел",p.disputed+"",false);
       h+=kpi("Выходных / отъезд",p.offdays+"<small> дн.</small>",false);
       h+=kpi("Дней подряд на 100%",p.streak+"",false);
       h+='</div></div>';
     });
-    h+='<div class="an-explain">«Без учёта отменённых» — выполнение из тех дел, что не сняли кнопкой «не буду». «Пропущено» — усилия, снятые с себя (ушли в этот счётчик). «Оспорено» — сейчас спорных дел.</div>';
+    h+='<div class="an-explain">«Без учёта отменённых» — выполнение из тех дел, что не сняли кнопкой «не буду». «Пропущено и списано» — усилия, снятые кнопкой «не буду» или списанные из пула хвостов. «Оспорено» — сейчас спорных дел.</div>';
     h+='<div class="catwrap">';
     ["p1","p2"].forEach(function(pid){ h+=catCard(pid,A.cat[pid]); });
     h+='</div></div>';
@@ -1018,6 +1128,10 @@ root.addEventListener("click",function(e){
   if(a==="disp-redo"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
   if(a==="disp-disagree"){ ui.disputing=null; commit({t:"dispute-disagree",s:date,cid:cid}); return; }
   if(a==="disp-resolve"){ ui.disputing=null; commit({t:"dispute-resolve",s:date,cid:cid}); return; }
+  if(a==="debt-done"){ commit({t:"debt-done",s:date,cid:cid,by:ui.me}); return; }
+  if(a==="debt-claim"){ commit({t:"debt-claim",s:date,cid:cid,by:ui.me}); return; }
+  if(a==="debt-release"){ commit({t:"debt-release",s:date,cid:cid}); return; }
+  if(a==="debt-skip"){ freezeDay(date); var ex=debtOf(date,cid); var by=(ex&&ex.st==="claim")?ex.by:computeAssignments(date).assign[cid]; commit({t:"debt-skip",s:date,cid:cid,by:by}); return; }
   if(a==="restday"){ commit({t:"restday",pid:t.getAttribute("data-pid"),d:+t.getAttribute("data-d")}); return; }
   if(a==="away-add"){ var apid=t.getAttribute("data-pid"),af=document.getElementById("awayfrom-"+apid),at=document.getElementById("awayto-"+apid),fv=af&&af.value,tv=at&&at.value; if(!fv||!tv){ if(af&&!fv)af.focus(); return; } if(fv>tv){ var sw=fv; fv=tv; tv=sw; } commit({t:"away-add",pid:apid,from:fv,to:tv}); return; }
   if(a==="away-del"){ commit({t:"away-del",pid:t.getAttribute("data-pid"),idx:+t.getAttribute("data-idx")}); return; }
@@ -1097,6 +1211,7 @@ function save(){
 }
 function startLocal(){
   try{ var ls=localStorage.getItem(LSKEY); if(ls) state=normalize(JSON.parse(ls)); }catch(e){}
+  migrateFreeze();
   render(); setStatus("local");
 }
 function init(){
@@ -1112,7 +1227,7 @@ function init(){
       if(v==null){ lastWritten=JSON.stringify(state); fbRef.set(state); render(); setStatus(online?"saved":"offline"); return; }
       var j=JSON.stringify(v);
       if(j===lastWritten) return;
-      state=normalize(v); render(); setStatus(online?"saved":"offline");
+      state=normalize(v); if(migrateFreeze())scheduleSave(); render(); setStatus(online?"saved":"offline");
     },function(){ setStatus("error"); });
   }catch(e){ startLocal(); }
 }
