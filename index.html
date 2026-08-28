@@ -113,6 +113,13 @@ h1,h2,h3{margin:0}
 .step.full{background:var(--pc)}
 .step.full button,.step.full .n{color:#fff}
 .step.ro{padding:2px 9px;cursor:default}
+.stepone{flex:0 0 auto;min-width:40px;height:27px;border:1.8px solid var(--pc);border-radius:9px;background:transparent;display:inline-flex;align-items:center;justify-content:center;padding:0 8px;margin-top:0;transition:.12s}
+.stepone .n{font-size:12.5px;font-weight:700;color:var(--pc-ink)}
+.stepone.full{background:var(--pc);border-color:var(--pc)}
+.stepone svg{width:15px;height:15px;stroke:#fff;stroke-width:3.2;fill:none}
+.stepone:active{transform:scale(.94)}
+.step.ro svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none}
+.step.ro.full svg{stroke:#fff}
 .step.ro.lock{border-color:var(--faint);border-style:dashed;opacity:.75}
 .step.ro.lock .n{color:var(--muted)}
 .tbody{flex:1;min-width:0}
@@ -152,7 +159,10 @@ h1,h2,h3{margin:0}
 .pool-t{font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase;color:var(--warn)}
 .pool-cnt{color:var(--faint);font-size:13px;font-weight:600;margin-left:auto}
 .pool-note{color:var(--muted);font-size:12.5px;line-height:1.45;margin-bottom:11px}
+.grace-note{display:flex;gap:8px;align-items:flex-start;font-size:12.8px;line-height:1.45;color:var(--cy-ink);background:var(--cy-soft);border-radius:12px;padding:10px 13px;margin-bottom:12px}
+.grace-note svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px}
 .pool-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pool-empty{color:var(--muted);font-size:13px;line-height:1.5;text-align:center;padding:8px 6px}
 .pool-item{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:10px 12px;border:1px solid var(--line-2);border-left:3px solid var(--warn);border-radius:11px;background:var(--warn-soft)}
 .pi-body{flex:1;min-width:160px}
 .pi-tt{font-weight:600;font-size:14.5px;line-height:1.25;word-break:break-word}
@@ -513,6 +523,7 @@ function addDays(s,n){ return ymd(new Date(parseYMD(s).getTime()+n*86400000)); }
 function mondayOf(s){ var d=parseYMD(s),wd=d.getDay(),diff=(wd===0?-6:1-wd); return addDays(s,diff); }
 function weekDates(off){ var start=addDays(mondayOf(todayStr()),off*7),a=[]; for(var i=0;i<7;i++)a.push(addDays(start,i)); return a; }
 function lastNDays(n){ var t=todayStr(),a=[]; for(var i=n-1;i>=0;i--)a.push(addDays(t,-i)); return a; }
+function graceDay(){ return (new Date().getHours()<12) ? addDays(todayStr(),-1) : null; } /* до полудня вчерашний день ещё редактируется */
 
 /* ---------- effort ---------- */
 function effortOf(c){ return (c.points||0)*(c.perDay||1); }
@@ -637,10 +648,11 @@ function isTail(c,d){
 }
 function poolTails(){
   var today=todayStr(),fa=firstActivityDate(); if(!fa)return [];
-  var faI=dayIndex(fa),out=[],k,d,comp;
+  var faI=dayIndex(fa),out=[],k,d,comp,gd=graceDay();
   for(k=1;k<=7;k++){
     d=addDays(today,-k);
-    if(dayIndex(d)<faI)break;               /* до первого дня учёта долгов нет */
+    if(dayIndex(d)<faI)break;
+    if(gd&&d===gd)continue;               /* до первого дня учёта долгов нет */
     comp=computeAssignments(d);
     comp.due.forEach(function(c){
       if(!isTail(c,d))return;
@@ -782,6 +794,7 @@ function render(){
   html+='<div class="sec"><div class="sec-h"><h2>Сегодня</h2><div class="ln"></div></div><div class="cols">';
   order.forEach(function(pid){ html+=todayColHTML(pid,comp,s); });
   html+='</div>'+snoozeStripHTML(s)+'</div>';
+  html+=graceHTML();
   html+=poolHTML(s);
 
   html+=calendarHTML();
@@ -822,7 +835,11 @@ function snoozeStripHTML(s){
   return h+'</div>';
 }
 function poolHTML(s){
-  var tails=poolTails(); if(!tails.length)return"";
+  var tails=poolTails();
+  if(!tails.length){
+    if(!firstActivityDate())return"";
+    return '<div class="sec"><div class="sec-h"><h2>Несделанные дела</h2><div class="ln"></div></div><div class="pool glass"><div class="pool-empty">Всё разобрано — несделанных дел за последние дни нет. Сюда попадают дела, которые не отметили в свой день (и не сняли).</div></div></div>';
+  }
   var tot=tails.reduce(function(a,x){return a+x.eff;},0);
   var h='<div class="sec"><div class="sec-h"><h2>Несделанные дела</h2><div class="ln"></div></div>';
   h+='<div class="pool glass"><div class="pool-h"><span class="pool-t">Хвосты за последние дни</span><span class="pool-cnt tnum">'+tails.length+' дел · '+fmtPts(tot)+' ус.</span></div>';
@@ -847,8 +864,17 @@ function poolHTML(s){
   });
   return h+'</ul></div></div>';
 }
+function graceHTML(){
+  var gd=graceDay(); if(!gd)return"";
+  var comp=computeAssignments(gd),me=ui.me,order=me==="p2"?["p2","p1"]:["p1","p2"];
+  var h='<div class="sec"><div class="sec-h"><h2>Вчера · ещё можно доотметить</h2><div class="ln"></div></div>';
+  h+='<div class="grace-note">'+IC_CLOCK+'<span>До полудня можно доотметить вчерашние дела — они засчитаются во вчерашний день ('+esc(fmtDate(gd))+'). Кнопки передачи/переноса тут скрыты — только отметить сделанное.</span></div>';
+  h+='<div class="cols">';
+  order.forEach(function(pid){ h+=todayColHTML(pid,comp,gd,true); });
+  return h+'</div></div>';
+}
 function dispKey(s,cid){ return s+"|"+cid; }
-function todayColHTML(pid,comp,s){
+function todayColHTML(pid,comp,s,grace){
   var p=getPerson(pid),pr=progress(pid,s,comp),other=pid==="p1"?"p2":"p1";
   var interactive=(pid===ui.me);
   var h='<div class="col glass'+(interactive?'':' ro-col')+'" style="'+pcVars(pid)+'"><div class="col-h"><span class="ch-l"><b>'+esc(p.name)+'</b>'+(interactive?'':'<span class="ro-tag">только просмотр</span>')+'</span><span class="mini tnum">'+(pr.empty?'—':(pr.countDone+'/'+pr.count+' дел · '+fmtPts(pr.done)+'/'+fmtPts(pr.tot)+' ус.'))+'</span></div>';
@@ -863,15 +889,14 @@ function todayColHTML(pid,comp,s){
     h+='<li class="task'+(ok?' ok':'')+(sk?' skip':'')+(dsp?' disp':'')+(pend?' pending':'')+'">';
     if(pend){ h+='<span class="step ro lock" title="Сначала отметьте: '+esc((getChore(c.after.on)||{}).title||'')+'"><span class="n tnum">'+u+'/'+pd+'</span></span>'; }
     else if(dOpen){ h+='<span class="dstat" title="Оспорено — ожидает ответа">!</span>'; }
-    else if(!interactive){ h+=(pd>1&&!sk)?'<div class="step ro'+(full?' full':'')+'"><span class="n tnum">'+u+'/'+pd+'</span></div>':'<span class="ck ro'+(sk?' skip':'')+'" aria-hidden="true">'+CHECK+'</span>'; }
+    else if(!interactive){ h+=(!sk)?'<div class="step ro'+(full?' full':'')+'">'+(full?CHECK:'<span class="n tnum">'+u+'/'+pd+'</span>')+'</div>':'<span class="ck ro skip" aria-hidden="true">'+CHECK+'</span>'; }
     else if(sk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
-    else if(pd>1){ h+='<div class="step'+(full?' full':'')+'"><button data-action="dec" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Меньше">−</button><span class="n tnum">'+u+'/'+pd+'</span><button data-action="inc" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Больше">+</button></div>'; }
-    else{ h+='<button class="ck" data-action="units" data-cid="'+c.id+'" data-date="'+s+'" data-val="'+(u?0:1)+'" aria-label="Отметить">'+CHECK+'</button>'; }
+    else{ h+='<button class="stepone'+(full?' full':'')+'" data-action="cycle" data-cid="'+c.id+'" data-date="'+s+'" aria-label="Отметить">'+(full?CHECK:'<span class="n tnum">'+u+'/'+pd+'</span>')+'</button>'; }
     h+='<div class="tbody"><div class="tt">'+esc(c.title)+'</div>';
     if(c.why)h+='<div class="why">'+esc(c.why)+'</div>';
     h+='<div class="meta"><span class="chip eff">'+fmtPts(c.points)+' · '+esc(effWord(c.points))+'</span>';
     if(isReactive(c)){ h+='<span class="chip rep">'+esc(depLabel(c))+'</span>'; }
-    else if(interactive&&!dOpen){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
+    else if(interactive&&!dOpen&&!grace){ h+='<span class="reps"><button class="rb" data-action="reps-dec" data-cid="'+c.id+'" title="Реже (раз в день)" aria-label="Меньше раз в день">−</button><span class="rn tnum">'+pd+'×/день</span><button class="rb" data-action="reps-inc" data-cid="'+c.id+'" title="Чаще (раз в день)" aria-label="Больше раз в день">+</button></span>'; }
     else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
     if(pend)h+='<span class="chip pend">сначала «'+esc(((getChore(c.after.on)||{}).title||'').split(" ")[0].toLowerCase())+' …»</span>';
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
@@ -879,6 +904,7 @@ function todayColHTML(pid,comp,s){
     if(dOpen)h+='<span class="chip disp">оспорено'+(rsn?' · «'+esc(rsn)+'»':'')+' · '+esc(dName)+'</span>';
     if(dDis)h+='<span class="chip disagree">разногласие'+(rsn?' · «'+esc(rsn)+'»':'')+'</span>';
     h+='</div></div>';
+    if(grace){ h+='</li>'; return; }
     if(pend){ /* ждём триггер — действий пока нет */ }
     else if(dOpen){
       h+='<div class="acts">';
@@ -1134,6 +1160,7 @@ root.addEventListener("click",function(e){
   if(a==="me"){ ui.me=t.getAttribute("data-pid"); saveUI(); render(); return; }
   if(a==="units"){ commit({t:"units",s:date,cid:cid,val:+t.getAttribute("data-val")}); return; }
   if(a==="inc"){ var c=getChore(cid),mx=maxUnits(c,date); commit({t:"units",s:date,cid:cid,val:Math.min(mx,unitsOf(date,cid)+1)}); return; }
+  if(a==="cycle"){ var cc=getChore(cid),mc=maxUnits(cc,date),cur=unitsOf(date,cid),nx=(cur+1>mc)?0:cur+1; commit({t:"units",s:date,cid:cid,val:nx}); return; }
   if(a==="dec"){ var pdd=(getChore(cid).perDay||1); commit({t:"units",s:date,cid:cid,val:Math.max(0,Math.min(pdd,unitsOf(date,cid))-1)}); return; }
   if(a==="reps-inc"){ var ci=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.min(12,(ci.perDay||1)+1)}}); return; }
   if(a==="reps-dec"){ var cd=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.max(1,(cd.perDay||1)-1)}}); return; }
