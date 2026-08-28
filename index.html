@@ -512,23 +512,23 @@ function lastNDays(n){ var t=todayStr(),a=[]; for(var i=n-1;i>=0;i--)a.push(addD
 /* ---------- effort ---------- */
 function effortOf(c){ return (c.points||0)*(c.perDay||1); }
 function isReactive(c){ return !!(c.after&&c.after.on); }
-function outstandingOf(c,s){
-  if(!isReactive(c)) return c.perDay||1;
-  var W=45,dd=Math.max(0,Math.round(c.after.delayDays||0)),trig=c.after.on,tot=0,dep=0,k;
-  for(k=dd;k<=W;k++) tot+=unitsOf(addDays(s,-k),trig);
-  for(k=1;k<=W;k++) dep+=unitsOf(addDays(s,-k),c.id);
-  var tg=tot-dep; return tg>0?tg:0;
-}
-function targetOf(c,s){ return isReactive(c)?outstandingOf(c,s):(c.perDay||1); }
-var _pvDepth=0;
-function previewOf(c,s){
-  if(!isReactive(c)||outstandingOf(c,s)>0||_pvDepth>6) return 0;
+var _rvDepth=0;
+/* Связанное («после …») дело появляется, когда его триггер запланирован delayDays назад,
+   и его плановое число ЗЕРКАЛИТ триггер — «поставить 2×» ⇒ «разобрать 2×», и оно сразу
+   считается в усилиях дня (не ждём, пока триггер отметят). */
+function reactiveDue(c,s){
+  if(!isReactive(c)||_rvDepth>6) return false;
   var dd=Math.max(0,Math.round(c.after.delayDays||0)),trig=getChore(c.after.on);
-  if(!trig) return 0;
-  _pvDepth++; var occ=occursOn(trig,addDays(s,-dd)); _pvDepth--;
-  return occ?(trig.perDay||1):0;
+  if(!trig) return false;
+  _rvDepth++; var due=occursOn(trig,addDays(s,-dd)); _rvDepth--;
+  return due;
 }
-function isPending(c,s){ return isReactive(c)&&outstandingOf(c,s)===0&&previewOf(c,s)>0; }
+function targetOf(c,s){
+  if(!isReactive(c)) return c.perDay||1;
+  if(!reactiveDue(c,s)) return 0;
+  var trig=getChore(c.after.on); return trig?(trig.perDay||1):1;
+}
+function isPending(){ return false; }
 function effortAt(c,s){ return (c.points||0)*targetOf(c,s); }
 function byEffDescOn(s){ return function(a,b){ return (effortAt(b,s)-effortAt(a,s))||(a.id<b.id?-1:1); }; }
 function depLabel(c){ var t=getChore(c.after.on),nm=t?t.title:'?',dd=Math.round(c.after.delayDays||0); return 'после: '+nm+(dd>0?' +'+dd+'д':''); }
@@ -544,7 +544,7 @@ function isDue(c,s){
   if(f.t==="once")return f.date===s;
   return true;
 }
-function occursOn(c,s){ if(isReactive(c)) return outstandingOf(c,s)>0||previewOf(c,s)>0; if(state.extra[s]&&state.extra[s][c.id])return true; if(state.moved[s]&&state.moved[s][c.id])return false; return isDue(c,s); }
+function occursOn(c,s){ if(isReactive(c)) return reactiveDue(c,s); if(state.extra[s]&&state.extra[s][c.id])return true; if(state.moved[s]&&state.moved[s][c.id])return false; return isDue(c,s); }
 function byEffDesc(a,b){ return (effortOf(b)-effortOf(a))||(a.id<b.id?-1:1); }
 function shares(){ var p1=(state.capacity&&typeof state.capacity.p1==="number")?state.capacity.p1:50; p1=Math.max(0,Math.min(100,p1)); return {p1:p1/100,p2:(100-p1)/100}; }
 function balanceInto(list,assign,di,totals,s){
@@ -613,7 +613,7 @@ function isSkipped(s,cid){ var k=state.skip[s]; return k&&k[cid]; }
 function firstActivityDate(){ var best=null,src=[state.done,state.skip,state.debt],i,k; for(i=0;i<src.length;i++){ for(k in src[i]){ if(best===null||k<best)best=k; } } return best; }
 function debtOf(d,cid){ var x=state.debt[d]; return x&&x[cid]?x[cid]:null; }
 function isTail(c,d){
-  if(isReactive(c))return false;            /* реактивные тянутся сами через outstandingOf */
+  if(isReactive(c))return false;            /* реактивные считаются сами (зеркалят триггер) */
   if(unitsOf(d,c.id)>0)return false;        /* только полностью не тронутые */
   if(isSkipped(d,c.id))return false;        /* уже сняли «не буду» */
   if(state.dispute[d]&&state.dispute[d][c.id])return false; /* в споре — свой поток */
