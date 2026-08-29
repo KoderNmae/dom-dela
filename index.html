@@ -411,16 +411,16 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"id":"c7","title":"Разобрать стирку из машинки","points":1,"perDay":1,"cat":"Стирка","why":"развесить или в сушилку — после стирки","freq":{"t":"after"},"after":{"on":"c6","delayDays":0}},
 {"id":"c8","title":"Снять сухие вещи с сушилки","points":1,"perDay":1,"cat":"Стирка","why":"снять и разложить — через ~2 суток после развешивания","freq":{"t":"after"},"after":{"on":"c7","delayDays":1}},
 {"id":"c9","title":"Помыть посуду руками","points":2,"perDay":1,"cat":"Кухня","why":"≈15 мин: то, что не идёт в машину","freq":{"t":"daily"}},
-{"id":"c10","title":"Разобрать холодильник","points":2,"perDay":1,"cat":"Кухня","why":"≈20–30 мин: выкинуть старое, протереть полки","freq":{"t":"dow","d":[6]}},
+{"id":"c10","title":"Разобрать холодильник","points":2,"perDay":1,"cat":"Кухня","why":"≈20–30 мин: выкинуть старое, протереть полки","freq":{"t":"dow","d":[1]}},
 {"id":"c11","title":"Поставить вещи на свои места","points":2,"perDay":1,"cat":"Уборка","why":"≈15 мин: разложить разбросанное по квартире","freq":{"t":"daily"}},
 {"id":"c12","title":"Убрать мусор поверхностно","points":1,"perDay":1,"cat":"Мусор","why":"≈5 мин: быстро собрать мусор по комнатам","freq":{"t":"daily"}},
 {"id":"c13","title":"Пропылесосить поверхностно","points":1,"perDay":1,"cat":"Уборка","why":"≈15 мин: пройтись по основным зонам","freq":{"t":"dow","d":[2,5]}},
-{"id":"c14","title":"Пропылесосить генерально","points":3,"perDay":1,"cat":"Уборка","why":"≈30–40 мин: вся квартира, углы, под мебелью","freq":{"t":"dow","d":[6]}},
+{"id":"c14","title":"Пропылесосить генерально","points":3,"perDay":1,"cat":"Уборка","why":"≈30–40 мин: вся квартира, углы, под мебелью","freq":{"t":"dow","d":[4]}},
 {"id":"c15","title":"Помыть зеркала","points":1,"perDay":1,"cat":"Ванная","why":"≈10 мин: все зеркала в доме","freq":{"t":"dow","d":[6]}},
 {"id":"c16","title":"Помыть унитаз","points":2,"perDay":1,"cat":"Ванная","why":"≈10 мин: почистить и протереть","freq":{"t":"dow","d":[3,6]}},
 {"id":"c17","title":"Помыть раковину и ванну","points":3,"perDay":1,"cat":"Ванная","why":"≈25 мин: оттереть налёт, физически тяжело","freq":{"t":"dow","d":[6]}},
-{"id":"c18","title":"Помыть пол","points":3,"perDay":1,"cat":"Уборка","why":"≈30 мин: вымыть полы во всей квартире","freq":{"t":"dow","d":[6]}},
-{"id":"c19","title":"Протереть пыль","points":2,"perDay":1,"cat":"Уборка","why":"≈15–20 мин: протереть все поверхности","freq":{"t":"dow","d":[6]}},
+{"id":"c18","title":"Помыть пол","points":3,"perDay":1,"cat":"Уборка","why":"≈30 мин: вымыть полы во всей квартире","freq":{"t":"dow","d":[4]}},
+{"id":"c19","title":"Протереть пыль","points":2,"perDay":1,"cat":"Уборка","why":"≈15–20 мин: протереть все поверхности","freq":{"t":"dow","d":[2]}},
 {"id":"c20","title":"Помыть собачьи миски","points":0.5,"perDay":2,"cat":"Собака","why":"≈3 мин за раз, 2 раза в день","freq":{"t":"daily"}},
 {"id":"c21","title":"Поменять постельное бельё","points":3,"perDay":1,"cat":"Спальня","why":"≈25 мин: снять, застелить, отправить в стирку","freq":{"t":"dow","d":[0]}},
 {"id":"c22","title":"Поменять полотенца","points":0.5,"perDay":1,"cat":"Ванная","why":"≈5 мин: заменить на свежие","freq":{"t":"dow","d":[0]}},
@@ -613,9 +613,22 @@ function autoAssign(s,due){
   return assign;
 }
 function computeAssignments(s){
-  var due=state.chores.filter(function(c){ return occursOn(c,s); });
+  var fz=state.frozen&&state.frozen[s], fzKeys=fz?Object.keys(fz):[];
+  var due;
+  if(fz&&fzKeys.length){
+    /* замороженный день: СОСТАВ дел тоже зафиксирован (ключи fz = что было в этот день на момент
+       заморозки), меняется только правками того же дня — перенос «на завтра» / разовое добавление.
+       Так смена расписания/конфига (напр. перенос дела с субботы) не переписывает задним числом
+       уже начатый день: заморозка держит и КТО делает, и КАКИЕ дела в этот день были. */
+    due=state.chores.filter(function(c){
+      if(state.moved[s]&&state.moved[s][c.id])return false;
+      if(state.extra[s]&&state.extra[s][c.id])return true;
+      return fz[c.id]!=null;
+    });
+  } else {
+    due=state.chores.filter(function(c){ return occursOn(c,s); });
+  }
   var assign=autoAssign(s,due);
-  var fz=state.frozen&&state.frozen[s];          /* день «в работе» — раскладка заморожена */
   if(fz){ due.forEach(function(c){ if(fz[c.id]!=null)assign[c.id]=fz[c.id]; }); }
   var ov=state.overrides[s];                      /* ручная передача — поверх всего */
   if(ov){ due.forEach(function(c){ if(ov[c.id])assign[c.id]=ov[c.id]; }); }
