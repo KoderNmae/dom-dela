@@ -927,22 +927,34 @@ function todayColHTML(pid,comp,s,grace){
   h+='<ul class="tasks">';
   mine.forEach(function(c){
     if(isCook(c)){
-      var meals=mealsOf(s,c.id),pdc=c.perDay||2,cooked=cookCooked(s,c.id),cfull=cooked>=pdc,cdn=cookDone(s,c.id);
-      h+='<li class="task cook'+(cfull?' ok':'')+'">';
-      h+='<div class="step ro'+(cfull?' full':'')+'">'+(cfull?CHECK:'<span class="n tnum">'+cooked+'/'+pdc+'</span>')+'</div>';
+      var csk=isSkipped(s,c.id);
+      var meals=mealsOf(s,c.id),pdc=c.perDay||2,cooked=cookCooked(s,c.id),cfull=(cooked>=pdc)&&!csk,cdn=cookDone(s,c.id);
+      h+='<li class="task cook'+(cfull?' ok':'')+(csk?' skip':'')+'">';
+      if(!interactive){ h+= csk?'<span class="ck ro skip" aria-hidden="true">'+CHECK+'</span>':'<div class="step ro'+(cfull?' full':'')+'">'+(cfull?CHECK:'<span class="n tnum">'+cooked+'/'+pdc+'</span>')+'</div>'; }
+      else if(csk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
+      else { h+='<div class="step ro'+(cfull?' full':'')+'">'+(cfull?CHECK:'<span class="n tnum">'+cooked+'/'+pdc+'</span>')+'</div>'; }
       h+='<div class="tbody"><div class="tt">'+esc(c.title)+'</div>';
       if(c.why)h+='<div class="why">'+esc(c.why)+'</div>';
-      h+='<div class="meals'+(interactive?'':' ro')+'">';
-      for(var mi=0;mi<pdc;mi++){ var lv=meals[mi];
-        h+='<div class="meal"><span class="ml">'+(pdc>1?('№'+(mi+1)):'Готовка')+'</span>';
-        if(interactive){ ["e","m","h"].forEach(function(L){ h+='<button class="lvl'+(lv===L?' sel lvl-'+L:'')+'" data-action="meal" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" data-lvl="'+L+'">'+LVLW[L]+'<i>'+LVL[L]+'</i></button>'; }); }
-        else { h+=lv?('<span class="lvl sel lvl-'+lv+'">'+LVLW[lv]+'<i>'+LVL[lv]+'</i></span>'):'<span class="lvl none">не готовила</span>'; }
+      if(!csk){
+        h+='<div class="meals'+(interactive?'':' ro')+'">';
+        for(var mi=0;mi<pdc;mi++){ var lv=meals[mi];
+          h+='<div class="meal"><span class="ml">'+(pdc>1?('№'+(mi+1)):'Готовка')+'</span>';
+          if(interactive){ ["e","m","h"].forEach(function(L){ h+='<button class="lvl'+(lv===L?' sel lvl-'+L:'')+'" data-action="meal" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" data-lvl="'+L+'">'+LVLW[L]+'<i>'+LVL[L]+'</i></button>'; }); }
+          else { h+=lv?('<span class="lvl sel lvl-'+lv+'">'+LVLW[lv]+'<i>'+LVL[lv]+'</i></span>'):'<span class="lvl none">не готовила</span>'; }
+          h+='</div>';
+        }
         h+='</div>';
       }
-      h+='</div>';
-      h+='<div class="meta"><span class="chip eff">'+fmtPts(cdn)+' ус. сегодня</span>';
+      h+='<div class="meta">';
+      if(csk){ h+= coveringDay(pid,s)?'<span class="chip cover">не готовим · подмена</span>':'<span class="chip skipped">не готовим · +'+fmtPts(effortAt(c,s))+' ус.</span>'; }
+      else { h+='<span class="chip eff">'+fmtPts(cdn)+' ус. сегодня</span>'; }
       if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
-      h+='</div></div></li>';
+      h+='</div></div>';
+      if(!grace&&interactive&&!csk){
+        h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+' Передать '+esc(dativeName(getPerson(other).name))+'</button>';
+        h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не готовим сегодня">'+IC_SKIP+' Не буду</button></div>';
+      }
+      h+='</li>';
       return;
     }
     var sk=isSkipped(s,c.id),pend=isPending(c,s),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=(u>=pd)&&!pend;
