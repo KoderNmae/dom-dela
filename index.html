@@ -795,7 +795,7 @@ function render(){
   order.forEach(function(pid){ html+=todayColHTML(pid,comp,s); });
   html+='</div>'+snoozeStripHTML(s)+'</div>';
   html+=graceHTML();
-  html+=poolHTML(s);
+  /* pool «Несделанные дела» removed at Egor's request — the «Вчера» grace board is the single catch-up now (poolHTML kept but not rendered) */
 
   html+=calendarHTML();
   html+=analyticsHTML();
