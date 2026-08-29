@@ -122,6 +122,20 @@ h1,h2,h3{margin:0}
 .step.ro.full svg{stroke:#fff}
 .step.ro.lock{border-color:var(--faint);border-style:dashed;opacity:.75}
 .step.ro.lock .n{color:var(--muted)}
+.meals{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.meal{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.meal .ml{font-size:11px;font-weight:700;color:var(--muted);min-width:34px}
+.lvl{font-size:11.5px;font-weight:600;color:var(--pc-ink);border:1.5px solid var(--faint);background:transparent;border-radius:8px;padding:3px 9px;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:.12s;line-height:1}
+.lvl i{font-style:normal;font-size:9.5px;font-weight:800;opacity:.55}
+button.lvl:active{transform:scale(.93)}
+.lvl.sel{color:#fff;border-color:transparent}
+.lvl.sel i{opacity:.9;color:#fff}
+.lvl.sel.lvl-e{background:#3fae6b}
+.lvl.sel.lvl-m{background:#d98a24}
+.lvl.sel.lvl-h{background:#d7503f}
+.lvl.none{color:var(--muted);border-style:dashed;cursor:default}
+.lvl.ro{cursor:default}
+.task.cook .step.ro{cursor:default}
 .tbody{flex:1;min-width:0}
 .tt{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
 .task.ok .tt,.task.skip .tt{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--faint)}
@@ -435,7 +449,7 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"id":"c31","title":"Пропылесосить и перевернуть матрас","points":3,"perDay":1,"cat":"Спальня","why":"раз в полгода: перевернуть, пропылесосить","freq":{"t":"everyN","n":180,"anchor":"2026-10-01"}},
 {"id":"c32","title":"Протереть плинтусы","points":3,"perDay":1,"cat":"Уборка","why":"≈20–30 мин: пройти плинтусы во всех комнатах","freq":{"t":"everyN","n":14,"anchor":"2026-08-30"}},
 {"id":"c33","title":"Почистить диван от собачьей шерсти","points":2,"perDay":1,"cat":"Собака","why":"≈15 мин, раз в месяц: пройтись по дивану, собрать шерсть","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}},
-{"id":"c34","title":"Почистить ковёр от собачьей шерсти","points":3,"perDay":1,"cat":"Собака","why":"≈25 мин, раз в месяц: тщательно пропылесосить ковёр от шерсти","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}}
+{"id":"c34","title":"Почистить ковёр от собачьей шерсти","points":3,"perDay":1,"cat":"Собака","why":"≈25 мин, раз в месяц: тщательно пропылесосить ковёр от шерсти","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}},{"id":"c35","title":"Готовка еды","cook":true,"owner":"p2","points":2,"perDay":2,"cat":"Кухня","why":"2 приёма в день; сложность (лёгкая/средняя/сложная) меняется прямо в задании","freq":{"t":"daily"}}
 ],
 "overrides":{},"done":{},"skip":{},"moved":{},"extra":{}}
 </script>
@@ -443,6 +457,7 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 <script id="app">
 (function(){
 "use strict";
+var LVL={e:2,m:4,h:7}, LVLW={e:"Лёгкая",m:"Средняя",h:"Сложная"};   /* сложность готовки → усилия (объявлено рано: migrateFreeze считает эффорт при загрузке) */
 
 /* =====================================================================
    НАСТРОЙКА FIREBASE — подключено к проекту dom-dela (Realtime Database, europe-west1).
@@ -501,6 +516,7 @@ function normalize(s){
   if(!s.dispute) s.dispute={};
   if(!s.debt) s.debt={};
   if(!s.frozen) s.frozen={};
+  if(!s.meals) s.meals={};
   if(!s.restDay) s.restDay={};
   if(!s.away) s.away={};
   ["p1","p2"].forEach(function(pid){ if(s.away[pid]&&!Array.isArray(s.away[pid])) s.away[pid]=Object.keys(s.away[pid]).map(function(k){return s.away[pid][k];}); });
@@ -556,7 +572,13 @@ function targetOf(c,s){
 }
 function isPending(c,s){ return isReactive(c)&&owedOf(c,s)===0&&targetOf(c,s)>0; } /* виден, но пока залочен */
 function maxUnits(c,s){ return isReactive(c)?owedOf(c,s):(c.perDay||1); }
-function effortAt(c,s){ return (c.points||0)*targetOf(c,s); }
+/* ---------- готовка (переменная сложность прямо в задании); LVL/LVLW объявлены в начале IIFE ---------- */
+function isCook(c){ return !!(c&&c.cook); }
+function mealsOf(s,cid){ var c=getChore(cid),pd=(c&&c.perDay)||2,a=(state.meals&&state.meals[s]&&state.meals[s][cid])||[],out=[],i; for(i=0;i<pd;i++)out.push(a[i]||null); return out; }
+function cookCooked(s,cid){ return mealsOf(s,cid).filter(function(x){return x;}).length; }               /* сколько приёмов приготовлено */
+function cookDone(s,cid){ return mealsOf(s,cid).reduce(function(t,x){return t+(x?LVL[x]:0);},0); }        /* сделанные усилия */
+function cookAssigned(s,cid){ return mealsOf(s,cid).reduce(function(t,x){return t+(x?LVL[x]:LVL.e);},0); } /* нагрузка дня: незаполненный слот = лёгкая по умолчанию */
+function effortAt(c,s){ if(isCook(c)) return cookAssigned(s,c.id); return (c.points||0)*targetOf(c,s); }
 function byEffDescOn(s){ return function(a,b){ return (effortAt(b,s)-effortAt(a,s))||(a.id<b.id?-1:1); }; }
 function depLabel(c){ var t=getChore(c.after.on),nm=t?t.title:'?',dd=Math.round(c.after.delayDays||0); return 'после: '+nm+(dd>0?' +'+dd+'д':''); }
 function fmtPts(v){ return (Math.round(v*100)/100).toString(); }
@@ -605,9 +627,14 @@ function autoAssign(s,due){
     due.forEach(function(c){ if(c.owner==="p1"||c.owner==="p2"){assign[c.id]=c.owner;totals[c.owner]+=effortAt(c,s);} else rest.push(c); });
     balanceInto(rest.sort(cmp),assign,di,totals,s);
   } else if(state.mode==="rotate"){
-    due.slice().sort(cmp).forEach(function(c,i){ assign[c.id]=(((i+di)%2)===0)?"p1":"p2"; });
+    var restR=[]; due.forEach(function(c){ if(c.owner==="p1"||c.owner==="p2")assign[c.id]=c.owner; else restR.push(c); });
+    restR.slice().sort(cmp).forEach(function(c,i){ assign[c.id]=(((i+di)%2)===0)?"p1":"p2"; });
   } else {
-    balanceInto(due.slice().sort(cmp),assign,di,{p1:0,p2:0},s);
+    /* закреплённые за человеком дела (owner) пиннятся ВО ВСЕХ режимах и учитываются в балансе,
+       чтобы «Готовка» всегда была у Маши, а остальное подравнивалось под неё */
+    var rest=[],totals={p1:0,p2:0};
+    due.forEach(function(c){ if(c.owner==="p1"||c.owner==="p2"){assign[c.id]=c.owner;totals[c.owner]+=effortAt(c,s);} else rest.push(c); });
+    balanceInto(rest.sort(cmp),assign,di,totals,s);
   }
   for(var fp=0;fp<3;fp++){ due.forEach(function(c){ if(isReactive(c)&&targetOf(c,s)===0){ var tg=c.after&&c.after.on; if(tg&&assign[tg]&&assign[c.id]!==assign[tg])assign[c.id]=assign[tg]; } }); }
   return assign;
@@ -685,12 +712,14 @@ function dayTotals(comp,s){
 function loadPct(comp,s){ var t=dayTotals(comp,s); if(!t.total)return{p1:50,p2:50,t:t}; var a=Math.round(t.p1/t.total*100); return{p1:a,p2:100-a,t:t}; }
 function progress(pid,s,comp){
   var tot=0,dn=0,cnt=0,cdone=0;
-  comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id)||isPending(c,s))return; var tg=targetOf(c,s),e=(c.points||0)*tg,u=Math.min(tg,unitsOf(s,c.id)); tot+=e; dn+=(c.points||0)*u; cnt++; if(u>=tg)cdone++; });
+  comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id)||isPending(c,s))return;
+    if(isCook(c)){ tot+=cookAssigned(s,c.id); dn+=cookDone(s,c.id); cnt++; if(cookCooked(s,c.id)>=(c.perDay||2))cdone++; return; }
+    var tg=targetOf(c,s),e=(c.points||0)*tg,u=Math.min(tg,unitsOf(s,c.id)); tot+=e; dn+=(c.points||0)*u; cnt++; if(u>=tg)cdone++; });
   return {tot:tot,done:dn,pct:tot?Math.round(dn/tot*100):100,empty:cnt===0,remaining:tot-dn,count:cnt,countDone:cdone};
 }
 function tasksFor(pid,comp,s){
   var arr=comp.due.filter(function(c){ return comp.assign[c.id]===pid; });
-  function _rk(c){ if(isPending(c,s))return 1; return (unitsOf(s,c.id)>=targetOf(c,s)||isSkipped(s,c.id))?2:0; }
+  function _rk(c){ if(isPending(c,s))return 1; if(isCook(c))return (cookCooked(s,c.id)>=(c.perDay||2))?2:0; return (unitsOf(s,c.id)>=targetOf(c,s)||isSkipped(s,c.id))?2:0; }
   arr.sort(function(a,b){ return _rk(a)-_rk(b)||byEffDescOn(s)(a,b); });
   return arr;
 }
@@ -704,8 +733,9 @@ function analytics(days){
       var A=0,D=0,S=0,active=0;
       comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid)return; var e=effortAt(c,s);
         if(isSkipped(s,c.id)){ if(coveringDay(pid,s))return; A+=e; S+=e; return; }  /* подмена: отмена без штрафа */
-        A+=e;
-        active+=e; var u=Math.min(targetOf(c,s),unitsOf(s,c.id)), de=(c.points||0)*u; D+=de;
+        A+=e; active+=e;
+        var de; if(isCook(c)){ de=cookDone(s,c.id); } else { de=(c.points||0)*Math.min(targetOf(c,s),unitsOf(s,c.id)); }
+        D+=de;
         if(de>0){ var k=c.cat||"Прочее"; cat[pid][k]=(cat[pid][k]||0)+de; }
       });
       var p=per[pid]; p.assigned+=A; p.done+=D; p.skipped+=S; p.kept+=(A-S);
@@ -734,7 +764,7 @@ function streakOf(pid){
   var n=0,s=todayStr(),guard=0;
   while(guard++<400){
     var comp=computeAssignments(s),active=0,D=0;
-    comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id))return; active+=effortAt(c,s); D+=(c.points||0)*Math.min(targetOf(c,s),unitsOf(s,c.id)); });
+    comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id))return; active+=effortAt(c,s); D+=isCook(c)?cookDone(s,c.id):(c.points||0)*Math.min(targetOf(c,s),unitsOf(s,c.id)); });
     if(active===0){ s=addDays(s,-1); continue; }
     if(D>=active-1e-9){ n++; s=addDays(s,-1); } else break;
     if(dayIndex(s)<dayIndex(state.chores.length?"2020-01-01":todayStr()))break;
@@ -747,8 +777,9 @@ function getChore(id){ for(var i=0;i<state.chores.length;i++)if(state.chores[i].
 function getPerson(id){ for(var i=0;i<state.people.length;i++)if(state.people[i].id===id)return state.people[i]; return null; }
 function applyOp(o){
   var s=o.s,c;
-  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
+  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="meal"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
   if(o.t==="units"||o.t==="toggle"){ var v=(o.t==="toggle")?(o.val?1:0):o.val; if(!state.done[s])state.done[s]={}; if(v>0)state.done[s][o.cid]=v; else delete state.done[s][o.cid]; if(v>0&&state.skip[s])delete state.skip[s][o.cid]; }
+  else if(o.t==="meal"){ if(!state.meals[s])state.meals[s]={}; var mc=getChore(o.cid),mpd=(mc&&mc.perDay)||2,ma=(state.meals[s][o.cid]||[]).slice(); while(ma.length<mpd)ma.push(null); ma[o.slot]=(ma[o.slot]===o.lvl)?null:o.lvl; if(ma.some(function(x){return x;})) state.meals[s][o.cid]=ma; else { delete state.meals[s][o.cid]; if(!Object.keys(state.meals[s]).length)delete state.meals[s]; } }
   else if(o.t==="skip"){ if(o.on){ if(!state.skip[s])state.skip[s]={}; state.skip[s][o.cid]=o.pid; if(state.done[s])delete state.done[s][o.cid]; } else { if(state.skip[s])delete state.skip[s][o.cid]; } }
   else if(o.t==="assign"){ if(!state.overrides[s])state.overrides[s]={}; state.overrides[s][o.cid]=o.to; }
   else if(o.t==="reset-ov"){ delete state.overrides[s]; }
@@ -895,6 +926,25 @@ function todayColHTML(pid,comp,s,grace){
   if(!mine.length){ var oi=offInfo(pid,s); var em=(oi==="отдых")?('Выходной · дела у '+esc(genName(getPerson(other).name))):((oi==="отъезд")?('Не выполняет · дела у '+esc(genName(getPerson(other).name))):'Свободно сегодня'); return h+'<div class="empty">'+em+'</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
+    if(isCook(c)){
+      var meals=mealsOf(s,c.id),pdc=c.perDay||2,cooked=cookCooked(s,c.id),cfull=cooked>=pdc,cdn=cookDone(s,c.id);
+      h+='<li class="task cook'+(cfull?' ok':'')+'">';
+      h+='<div class="step ro'+(cfull?' full':'')+'">'+(cfull?CHECK:'<span class="n tnum">'+cooked+'/'+pdc+'</span>')+'</div>';
+      h+='<div class="tbody"><div class="tt">'+esc(c.title)+'</div>';
+      if(c.why)h+='<div class="why">'+esc(c.why)+'</div>';
+      h+='<div class="meals'+(interactive?'':' ro')+'">';
+      for(var mi=0;mi<pdc;mi++){ var lv=meals[mi];
+        h+='<div class="meal"><span class="ml">'+(pdc>1?('№'+(mi+1)):'Готовка')+'</span>';
+        if(interactive){ ["e","m","h"].forEach(function(L){ h+='<button class="lvl'+(lv===L?' sel lvl-'+L:'')+'" data-action="meal" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" data-lvl="'+L+'">'+LVLW[L]+'<i>'+LVL[L]+'</i></button>'; }); }
+        else { h+=lv?('<span class="lvl sel lvl-'+lv+'">'+LVLW[lv]+'<i>'+LVL[lv]+'</i></span>'):'<span class="lvl none">не готовила</span>'; }
+        h+='</div>';
+      }
+      h+='</div>';
+      h+='<div class="meta"><span class="chip eff">'+fmtPts(cdn)+' ус. сегодня</span>';
+      if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
+      h+='</div></div></li>';
+      return;
+    }
     var sk=isSkipped(s,c.id),pend=isPending(c,s),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=(u>=pd)&&!pend;
     var dsp=state.dispute[s]&&state.dispute[s][c.id], dOpen=dsp&&dsp.st==="open", dDis=dsp&&dsp.st==="disagree";
     var dName=dsp?getPerson(dsp.by).name:'', rsn=(dsp&&dsp.reason)?dsp.reason:'';
@@ -1174,6 +1224,7 @@ root.addEventListener("click",function(e){
   if(a==="units"){ commit({t:"units",s:date,cid:cid,val:+t.getAttribute("data-val")}); return; }
   if(a==="inc"){ var c=getChore(cid),mx=maxUnits(c,date); commit({t:"units",s:date,cid:cid,val:Math.min(mx,unitsOf(date,cid)+1)}); return; }
   if(a==="cycle"){ var cc=getChore(cid),mc=maxUnits(cc,date),cur=unitsOf(date,cid),nx=(cur+1>mc)?0:cur+1; commit({t:"units",s:date,cid:cid,val:nx}); return; }
+  if(a==="meal"){ commit({t:"meal",s:date,cid:cid,slot:+t.getAttribute("data-slot"),lvl:t.getAttribute("data-lvl")}); return; }
   if(a==="dec"){ var pdd=(getChore(cid).perDay||1); commit({t:"units",s:date,cid:cid,val:Math.max(0,Math.min(pdd,unitsOf(date,cid))-1)}); return; }
   if(a==="reps-inc"){ var ci=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.min(12,(ci.perDay||1)+1)}}); return; }
   if(a==="reps-dec"){ var cd=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.max(1,(cd.perDay||1)-1)}}); return; }
