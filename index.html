@@ -174,6 +174,35 @@ button.lvl:active{transform:scale(.93)}
 .pool-cnt{color:var(--faint);font-size:13px;font-weight:600;margin-left:auto}
 .pool-note{color:var(--muted);font-size:12.5px;line-height:1.45;margin-bottom:11px}
 .grace-note{display:flex;gap:8px;align-items:flex-start;font-size:12.8px;line-height:1.45;color:var(--cy-ink);background:var(--cy-soft);border-radius:12px;padding:10px 13px;margin-bottom:12px}
+/* --- еженедельный дайджест --- */
+.digest{position:relative;padding:16px 18px;overflow:hidden}
+.digest::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(var(--p1),var(--p2))}
+.dg-x{position:absolute;top:9px;right:11px;border:0;background:transparent;color:var(--faint);font-size:20px;line-height:1;cursor:pointer;padding:2px 7px;border-radius:8px}
+.dg-x:hover{color:var(--ink);background:var(--line-2)}
+.dg-h{display:flex;align-items:center;gap:8px;color:var(--muted);font-family:var(--font-display);font-weight:600;font-size:14px;letter-spacing:.02em;text-transform:uppercase}
+.dg-h svg{width:17px;height:17px;color:var(--cy-ink)}
+.dg-h small{margin-left:auto;margin-right:24px;font-family:var(--font-ui);font-weight:600;font-size:12.5px;letter-spacing:0;text-transform:none;color:var(--faint)}
+.dg-hero{display:flex;align-items:center;gap:15px;margin:13px 0 15px}
+.dg-pct{font-family:var(--font-display);font-weight:700;font-size:42px;line-height:.95;color:var(--cy-ink)}
+.dg-sub{font-size:13.5px;line-height:1.4;color:var(--muted)}
+.dg-sub b{color:var(--ink)}
+.dg-split{margin-bottom:13px}
+.dg-bar{display:flex;height:12px;border-radius:999px;overflow:hidden;background:var(--line-2)}
+.dg-bar i{display:block;height:100%}
+.dg-bar i.p1{background:var(--p1)}
+.dg-bar i.p2{background:var(--p2)}
+.dg-leg{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:9px;font-size:13px;color:var(--muted)}
+.dg-leg b{color:var(--ink)}
+.dg-leg .dt{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dg-leg .dt.p1{background:var(--p1)}
+.dg-leg .dt.p2{background:var(--p2)}
+.dg-chips{display:flex;flex-wrap:wrap;gap:7px}
+.dg-chips .chip{font-size:12px;padding:3px 9px}
+.dg-chips .chip b{color:var(--ink)}
+.dg-foot{margin-top:11px;font-size:12.8px;color:var(--muted);line-height:1.4}
+.dg-foot b{color:var(--ink)}
+.dg-foot.ok{color:var(--p1-ink);font-weight:600;display:flex;align-items:center;gap:6px}
+.dg-foot.ok svg{width:15px;height:15px;color:var(--p1)}
 .grace-note svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px}
 .pool-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .pool-empty{color:var(--muted);font-size:13px;line-height:1.5;text-align:center;padding:8px 6px}
@@ -813,8 +842,54 @@ var IC_SKIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 var IC_CLOCK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg>';
 var IC_FLAG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>';
 var IC_CHECK2='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l6 6L20 5"/></svg>';
+var IC_STAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.7L20.5 11l-5.9 2.3L12 19l-2.6-5.7L3.5 11l5.9-2.3z"/></svg>';
 function pcVars(pid){ return "--pc:var(--"+pid+");--pc-ink:var(--"+pid+"-ink);--pc-soft:var(--"+pid+"-soft)"; }
 
+/* ---------- еженедельный дайджест (по понедельникам, за прошедшую неделю) ---------- */
+function plural(n,one,few,many){ var m=n%100,d=n%10; if(m>10&&m<20)return many; if(d===1)return one; if(d>=2&&d<=4)return few; return many; }
+function digestWeekDays(){ var dow=parseYMD(todayStr()).getDay(); if(!(dow===1||dow===2))return null; return weekDates(-1); } /* показываем Пн и Вт — про прошлую неделю */
+function weeklyDigest(days){
+  var an=analytics(days),p1=an.per.p1,p2=an.per.p2;
+  var totalA=p1.assigned+p2.assigned,totalD=p1.done+p2.done;
+  var pct=totalA>0?Math.round(totalD/totalA*100):0;
+  var dn=p1.done+p2.done,sh1=dn>0?Math.round(p1.done/dn*100):50;
+  var perfect=an.trend.filter(function(t){ return (t.p1===100||t.p1===null)&&(t.p2===100||t.p2===null)&&(t.p1!==null||t.p2!==null); }).length;
+  var heavy=null,cookN=0,cookLv={e:0,m:0,h:0},undoneCnt=0,doneCnt=0;
+  function ph(pts,title,who){ if(pts>0&&(!heavy||pts>heavy.pts))heavy={pts:pts,title:title,who:who}; }
+  days.forEach(function(s){ var comp=computeAssignments(s);
+    comp.due.forEach(function(c){ var pid=comp.assign[c.id];
+      if(isCook(c)){ mealsOf(s,c.id).forEach(function(x){ if(x){cookN++;cookLv[x]++;ph(LVL[x],'Готовка ('+LVLW[x].toLowerCase()+')',pid);} });
+        if(cookCooked(s,c.id)>0)doneCnt++; if(cookCooked(s,c.id)<(c.perDay||2))undoneCnt++; return; }
+      if(isSkipped(s,c.id)||isPending(c,s))return;
+      var tg=targetOf(c,s),u=Math.min(tg,unitsOf(s,c.id));
+      if(u>0){ph(c.points||0,c.title,pid);doneCnt++;}
+      if(u<tg)undoneCnt++;
+    });
+  });
+  return {from:days[0],to:days[6],totalA:totalA,totalD:totalD,pct:pct,p1:p1,p2:p2,sh1:sh1,sh2:100-sh1,
+    perfect:perfect,heavy:heavy,cookN:cookN,cookLv:cookLv,undoneCnt:undoneCnt,doneCnt:doneCnt,disputed:p1.disputed+p2.disputed};
+}
+function digestHTML(){
+  var days=digestWeekDays(); if(!days)return"";
+  var wk=days[0]; if(ui.digestSeen===wk)return"";
+  var d=weeklyDigest(days); if(d.totalA<=0)return"";
+  var mf=parseYMD(d.from),mt=parseYMD(d.to),range=mf.getDate()+" "+MONTHS_SH[mf.getMonth()]+" – "+mt.getDate()+" "+MONTHS_SH[mt.getMonth()];
+  var n1=esc(getPerson('p1').name),n2=esc(getPerson('p2').name);
+  var h='<div class="sec"><div class="digest glass">';
+  h+='<button class="dg-x" data-action="digest-dismiss" data-wk="'+wk+'" aria-label="Скрыть" title="Скрыть до следующего понедельника">×</button>';
+  h+='<div class="dg-h">'+IC_STAR+'<span>Итоги недели</span><small>'+range+'</small></div>';
+  h+='<div class="dg-hero"><span class="dg-pct tnum">'+d.pct+'%</span><span class="dg-sub">недели закрыто вместе<br><b>'+d.doneCnt+'</b> '+plural(d.doneCnt,'дело','дела','дел')+' · <b>'+fmtPts(d.totalD)+'</b> из '+fmtPts(d.totalA)+' усилий</span></div>';
+  h+='<div class="dg-split"><div class="dg-bar"><i class="p1" style="width:'+d.sh1+'%"></i><i class="p2" style="width:'+d.sh2+'%"></i></div>';
+  h+='<div class="dg-leg"><span><i class="dt p1"></i>'+n1+' <b>'+d.sh1+'%</b> · '+fmtPts(d.p1.done)+' ус.</span><span><i class="dt p2"></i>'+n2+' <b>'+d.sh2+'%</b> · '+fmtPts(d.p2.done)+' ус.</span></div></div>';
+  h+='<div class="dg-chips"><span class="chip">Дней на 100%: <b>'+d.perfect+'</b></span>';
+  if(d.cookN>0){ var pr=[]; if(d.cookLv.e)pr.push(d.cookLv.e+' лёгк.'); if(d.cookLv.m)pr.push(d.cookLv.m+' средн.'); if(d.cookLv.h)pr.push(d.cookLv.h+' сложн.'); h+='<span class="chip">Готовка: <b>'+d.cookN+'</b>'+(pr.length?' ('+pr.join(' · ')+')':'')+'</span>'; }
+  if(d.heavy)h+='<span class="chip">Самое тяжёлое: <b>'+esc(d.heavy.title)+'</b> · '+esc(getPerson(d.heavy.who).name)+'</span>';
+  if(d.disputed>0)h+='<span class="chip">Оспорено: <b>'+d.disputed+'</b></span>';
+  h+='</div>';
+  if(d.undoneCnt>0)h+='<div class="dg-foot">Осталось несделанным: <b>'+d.undoneCnt+'</b> '+plural(d.undoneCnt,'дело','дела','дел')+' — на новую неделю не переносится, просто к сведению.</div>';
+  else h+='<div class="dg-foot ok">'+IC_CHECK2+' Чистая неделя — всё сделано</div>';
+  return h+'</div></div>';
+}
 function render(){
   var s=todayStr(), comp=computeAssignments(s), me=ui.me, order=me==="p2"?["p2","p1"]:["p1","p2"], html="";
 
@@ -822,6 +897,8 @@ function render(){
   html+='<div class="spacer"></div><div class="me glass"><span>Это я</span>';
   state.people.forEach(function(p){ html+='<button class="'+p.id+(me===p.id?' on '+p.id:'')+'" data-action="me" data-pid="'+p.id+'">'+esc(p.name)+'</button>'; });
   html+='</div></div>';
+
+  html+=digestHTML();
 
   html+='<div class="sum">';
   order.forEach(function(pid){
@@ -1241,6 +1318,7 @@ root.addEventListener("click",function(e){
   var t=e.target.closest("[data-action]"); if(!t)return;
   var a=t.getAttribute("data-action"),cid=t.getAttribute("data-cid"),date=t.getAttribute("data-date")||todayStr();
   if(a==="me"){ ui.me=t.getAttribute("data-pid"); saveUI(); render(); return; }
+  if(a==="digest-dismiss"){ ui.digestSeen=t.getAttribute("data-wk"); saveUI(); render(); return; }
   if(a==="units"){ commit({t:"units",s:date,cid:cid,val:+t.getAttribute("data-val")}); return; }
   if(a==="inc"){ var c=getChore(cid),mx=maxUnits(c,date); commit({t:"units",s:date,cid:cid,val:Math.min(mx,unitsOf(date,cid)+1)}); return; }
   if(a==="cycle"){ var cc=getChore(cid),mc=maxUnits(cc,date),cur=unitsOf(date,cid),nx=(cur+1>mc)?0:cur+1; commit({t:"units",s:date,cid:cid,val:nx}); return; }
