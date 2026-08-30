@@ -908,11 +908,18 @@ function poolHTML(s){
   });
   return h+'</ul></div></div>';
 }
+function graceTodo(c,s){ /* дело, которое во вчерашнем дне ещё можно отметить: не сделано, не снято, не залочено */
+  if(isSkipped(s,c.id)) return false;
+  if(isCook(c)) return cookCooked(s,c.id)<(c.perDay||2);
+  if(isPending(c,s)) return false;
+  return unitsOf(s,c.id)<targetOf(c,s);
+}
 function graceHTML(){
   var gd=graceDay(); if(!gd)return"";
   var comp=computeAssignments(gd),me=ui.me,order=me==="p2"?["p2","p1"]:["p1","p2"];
+  if(!comp.due.some(function(c){ return graceTodo(c,gd); })) return "";   /* всё вчерашнее уже отмечено — блок не нужен */
   var h='<div class="sec"><div class="sec-h"><h2>Вчера · ещё можно доотметить</h2><div class="ln"></div></div>';
-  h+='<div class="grace-note">'+IC_CLOCK+'<span>До полудня можно доотметить вчерашние дела — они засчитаются во вчерашний день ('+esc(fmtDate(gd))+'). Кнопки передачи/переноса тут скрыты — только отметить сделанное.</span></div>';
+  h+='<div class="grace-note">'+IC_CLOCK+'<span>До полудня можно доотметить вчерашние дела, которые забыли отметить — они засчитаются во вчерашний день ('+esc(fmtDate(gd))+'). Показаны только неотмеченные; передача/перенос тут недоступны.</span></div>';
   h+='<div class="cols">';
   order.forEach(function(pid){ h+=todayColHTML(pid,comp,gd,true); });
   return h+'</div></div>';
@@ -923,7 +930,8 @@ function todayColHTML(pid,comp,s,grace){
   var interactive=(pid===ui.me);
   var h='<div class="col glass'+(interactive?'':' ro-col')+'" style="'+pcVars(pid)+'"><div class="col-h"><span class="ch-l"><b>'+esc(p.name)+'</b>'+(interactive?'':'<span class="ro-tag">только просмотр</span>')+'</span><span class="mini tnum">'+(pr.empty?'—':(pr.countDone+'/'+pr.count+' дел · '+fmtPts(pr.done)+'/'+fmtPts(pr.tot)+' ус.'))+'</span></div>';
   var mine=tasksFor(pid,comp,s);
-  if(!mine.length){ var oi=offInfo(pid,s); var em=(oi==="отдых")?('Выходной · дела у '+esc(genName(getPerson(other).name))):((oi==="отъезд")?('Не выполняет · дела у '+esc(genName(getPerson(other).name))):'Свободно сегодня'); return h+'<div class="empty">'+em+'</div></div>'; }
+  if(grace) mine=mine.filter(function(c){ return graceTodo(c,s); });   /* в блоке «Вчера» — только неотмеченные */
+  if(!mine.length){ if(grace) return h+'<div class="empty">всё отмечено ✓</div></div>'; var oi=offInfo(pid,s); var em=(oi==="отдых")?('Выходной · дела у '+esc(genName(getPerson(other).name))):((oi==="отъезд")?('Не выполняет · дела у '+esc(genName(getPerson(other).name))):'Свободно сегодня'); return h+'<div class="empty">'+em+'</div></div>'; }
   h+='<ul class="tasks">';
   mine.forEach(function(c){
     if(isCook(c)){
