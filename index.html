@@ -135,6 +135,11 @@ button.lvl:active{transform:scale(.93)}
 .lvl.sel.lvl-h{background:#d7503f}
 .lvl.none{color:var(--muted);border-style:dashed;cursor:default}
 .lvl.ro{cursor:default}
+.meal-add{align-self:flex-start;margin-top:2px;border:1.5px dashed var(--faint);background:transparent;color:var(--muted);font-size:11.5px;font-weight:600;border-radius:8px;padding:4px 11px;cursor:pointer;transition:.12s}
+.meal-add:hover{color:var(--pc-ink);border-color:var(--pc)}
+.meal-add:active{transform:scale(.96)}
+.mlx{border:0;background:transparent;color:var(--faint);font-size:17px;line-height:1;cursor:pointer;padding:0 5px;margin-left:2px}
+.mlx:hover{color:var(--warn)}
 .task.cook .step.ro{cursor:default}
 .tbody{flex:1;min-width:0}
 .tt{font-weight:600;font-size:15px;line-height:1.25;word-break:break-word}
@@ -588,9 +593,11 @@ function trigScheduled(c,s){
 }
 function owedOf(c,s){
   if(!isReactive(c)) return 0;
-  var W=45,d=Math.max(0,Math.round(c.after.delayDays||0)),T=c.after.on,tot=0,dep=0,k;
-  for(k=d;k<=W;k++) tot+=unitsOf(addDays(s,-k),T);
-  for(k=1;k<=W;k++) dep+=unitsOf(addDays(s,-k),c.id);
+  var d=Math.max(0,Math.round(c.after.delayDays||0)),T=c.after.on,tot=0,dep=0,k;
+  var W=(d>0)?d+1:0;   /* окно переноса: у дел «в тот же день» (задержка 0, напр. «разобрать») — только сегодня,
+                          чтобы хвост не копился неделями; у дел с задержкой («снять сухие») — короткое окно */
+  for(k=d;k<=W;k++) tot+=unitsOf(addDays(s,-k),T);        /* сколько раз «поставили» */
+  for(k=1;k<=W;k++) dep+=unitsOf(addDays(s,-k),c.id);     /* сколько уже «разобрали» в прошлые дни окна */
   var tg=tot-dep; return tg>0?tg:0;
 }
 function targetOf(c,s){
@@ -603,7 +610,8 @@ function isPending(c,s){ return isReactive(c)&&owedOf(c,s)===0&&targetOf(c,s)>0;
 function maxUnits(c,s){ return isReactive(c)?owedOf(c,s):(c.perDay||1); }
 /* ---------- готовка (переменная сложность прямо в задании); LVL/LVLW объявлены в начале IIFE ---------- */
 function isCook(c){ return !!(c&&c.cook); }
-function mealsOf(s,cid){ var c=getChore(cid),pd=(c&&c.perDay)||2,a=(state.meals&&state.meals[s]&&state.meals[s][cid])||[],out=[],i; for(i=0;i<pd;i++)out.push(a[i]||null); return out; }
+function mealsOf(s,cid){ var c=getChore(cid),pd=(c&&c.perDay)||2,a=(state.meals&&state.meals[s]&&state.meals[s][cid])||[],n=Math.max(pd,a.length),out=[],i; for(i=0;i<n;i++)out.push(a[i]||null); return out; } /* минимум perDay слотов, но Маша может добавить ещё на конкретный день */
+function cookSlots(s,cid){ return mealsOf(s,cid).length; }
 function cookCooked(s,cid){ return mealsOf(s,cid).filter(function(x){return x;}).length; }               /* сколько приёмов приготовлено */
 function cookDone(s,cid){ return mealsOf(s,cid).reduce(function(t,x){return t+(x?LVL[x]:0);},0); }        /* сделанные усилия */
 function cookAssigned(s,cid){ return mealsOf(s,cid).reduce(function(t,x){return t+(x?LVL[x]:LVL.e);},0); } /* нагрузка дня: незаполненный слот = лёгкая по умолчанию */
@@ -742,13 +750,13 @@ function loadPct(comp,s){ var t=dayTotals(comp,s); if(!t.total)return{p1:50,p2:5
 function progress(pid,s,comp){
   var tot=0,dn=0,cnt=0,cdone=0;
   comp.due.forEach(function(c){ if(comp.assign[c.id]!==pid||isSkipped(s,c.id)||isPending(c,s))return;
-    if(isCook(c)){ tot+=cookAssigned(s,c.id); dn+=cookDone(s,c.id); cnt++; if(cookCooked(s,c.id)>=(c.perDay||2))cdone++; return; }
+    if(isCook(c)){ tot+=cookAssigned(s,c.id); dn+=cookDone(s,c.id); cnt++; if(cookCooked(s,c.id)>=cookSlots(s,c.id))cdone++; return; }
     var tg=targetOf(c,s),e=(c.points||0)*tg,u=Math.min(tg,unitsOf(s,c.id)); tot+=e; dn+=(c.points||0)*u; cnt++; if(u>=tg)cdone++; });
   return {tot:tot,done:dn,pct:tot?Math.round(dn/tot*100):100,empty:cnt===0,remaining:tot-dn,count:cnt,countDone:cdone};
 }
 function tasksFor(pid,comp,s){
   var arr=comp.due.filter(function(c){ return comp.assign[c.id]===pid; });
-  function _rk(c){ if(isPending(c,s))return 1; if(isCook(c))return (cookCooked(s,c.id)>=(c.perDay||2))?2:0; return (unitsOf(s,c.id)>=targetOf(c,s)||isSkipped(s,c.id))?2:0; }
+  function _rk(c){ if(isPending(c,s))return 1; if(isCook(c))return (cookCooked(s,c.id)>=cookSlots(s,c.id))?2:0; return (unitsOf(s,c.id)>=targetOf(c,s)||isSkipped(s,c.id))?2:0; }
   arr.sort(function(a,b){ return _rk(a)-_rk(b)||byEffDescOn(s)(a,b); });
   return arr;
 }
@@ -806,9 +814,11 @@ function getChore(id){ for(var i=0;i<state.chores.length;i++)if(state.chores[i].
 function getPerson(id){ for(var i=0;i<state.people.length;i++)if(state.people[i].id===id)return state.people[i]; return null; }
 function applyOp(o){
   var s=o.s,c;
-  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="meal"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
+  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="meal"||o.t==="meal-add"||o.t==="meal-del"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
   if(o.t==="units"||o.t==="toggle"){ var v=(o.t==="toggle")?(o.val?1:0):o.val; if(!state.done[s])state.done[s]={}; if(v>0)state.done[s][o.cid]=v; else delete state.done[s][o.cid]; if(v>0&&state.skip[s])delete state.skip[s][o.cid]; }
-  else if(o.t==="meal"){ if(!state.meals[s])state.meals[s]={}; var mc=getChore(o.cid),mpd=(mc&&mc.perDay)||2,ma=(state.meals[s][o.cid]||[]).slice(); while(ma.length<mpd)ma.push(null); ma[o.slot]=(ma[o.slot]===o.lvl)?null:o.lvl; if(ma.some(function(x){return x;})) state.meals[s][o.cid]=ma; else { delete state.meals[s][o.cid]; if(!Object.keys(state.meals[s]).length)delete state.meals[s]; } }
+  else if(o.t==="meal"){ if(!state.meals[s])state.meals[s]={}; var mc=getChore(o.cid),mpd=(mc&&mc.perDay)||2,ma=(state.meals[s][o.cid]||[]).slice(); while(ma.length<mpd)ma.push(null); if(o.slot>=ma.length){ while(ma.length<=o.slot)ma.push(null); } ma[o.slot]=(ma[o.slot]===o.lvl)?null:o.lvl; if(ma.some(function(x){return x;})||ma.length>mpd) state.meals[s][o.cid]=ma; else { delete state.meals[s][o.cid]; if(!Object.keys(state.meals[s]).length)delete state.meals[s]; } }
+  else if(o.t==="meal-add"){ if(!state.meals[s])state.meals[s]={}; var mca=getChore(o.cid),mpa=(mca&&mca.perDay)||2,maa=(state.meals[s][o.cid]||[]).slice(); while(maa.length<mpa)maa.push(null); maa.push(null); state.meals[s][o.cid]=maa; }
+  else if(o.t==="meal-del"){ if(state.meals[s]&&state.meals[s][o.cid]){ var mcd=getChore(o.cid),mpd2=(mcd&&mcd.perDay)||2,mad=state.meals[s][o.cid].slice(); if(o.slot>=mpd2&&o.slot<mad.length&&!mad[o.slot])mad.splice(o.slot,1); if(mad.some(function(x){return x;})||mad.length>mpd2)state.meals[s][o.cid]=mad; else { delete state.meals[s][o.cid]; if(!Object.keys(state.meals[s]).length)delete state.meals[s]; } } }
   else if(o.t==="skip"){ if(o.on){ if(!state.skip[s])state.skip[s]={}; state.skip[s][o.cid]=o.pid; if(state.done[s])delete state.done[s][o.cid]; } else { if(state.skip[s])delete state.skip[s][o.cid]; } }
   else if(o.t==="assign"){ if(!state.overrides[s])state.overrides[s]={}; state.overrides[s][o.cid]=o.to; }
   else if(o.t==="reset-ov"){ delete state.overrides[s]; }
@@ -859,7 +869,7 @@ function weeklyDigest(days){
   days.forEach(function(s){ var comp=computeAssignments(s);
     comp.due.forEach(function(c){ var pid=comp.assign[c.id];
       if(isCook(c)){ mealsOf(s,c.id).forEach(function(x){ if(x){cookN++;cookLv[x]++;ph(LVL[x],'Готовка ('+LVLW[x].toLowerCase()+')',pid);} });
-        if(cookCooked(s,c.id)>0)doneCnt++; if(cookCooked(s,c.id)<(c.perDay||2))undoneCnt++; return; }
+        if(cookCooked(s,c.id)>0)doneCnt++; if(cookCooked(s,c.id)<cookSlots(s,c.id))undoneCnt++; return; }
       if(isSkipped(s,c.id)||isPending(c,s))return;
       var tg=targetOf(c,s),u=Math.min(tg,unitsOf(s,c.id));
       if(u>0){ph(c.points||0,c.title,pid);doneCnt++;}
@@ -987,7 +997,7 @@ function poolHTML(s){
 }
 function graceTodo(c,s){ /* дело, которое во вчерашнем дне ещё можно отметить: не сделано, не снято, не залочено */
   if(isSkipped(s,c.id)) return false;
-  if(isCook(c)) return cookCooked(s,c.id)<(c.perDay||2);
+  if(isCook(c)) return cookCooked(s,c.id)<cookSlots(s,c.id);
   if(isPending(c,s)) return false;
   return unitsOf(s,c.id)<targetOf(c,s);
 }
@@ -1013,7 +1023,7 @@ function todayColHTML(pid,comp,s,grace){
   mine.forEach(function(c){
     if(isCook(c)){
       var csk=isSkipped(s,c.id);
-      var meals=mealsOf(s,c.id),pdc=c.perDay||2,cooked=cookCooked(s,c.id),cfull=(cooked>=pdc)&&!csk,cdn=cookDone(s,c.id);
+      var meals=mealsOf(s,c.id),base=c.perDay||2,pdc=meals.length,cooked=cookCooked(s,c.id),cfull=(cooked>=pdc)&&pdc>0&&!csk,cdn=cookDone(s,c.id);
       h+='<li class="task cook'+(cfull?' ok':'')+(csk?' skip':'')+'">';
       if(!interactive){ h+= csk?'<span class="ck ro skip" aria-hidden="true">'+CHECK+'</span>':'<div class="step ro'+(cfull?' full':'')+'">'+(cfull?CHECK:'<span class="n tnum">'+cooked+'/'+pdc+'</span>')+'</div>'; }
       else if(csk){ h+='<button class="mini-btn restore" data-action="unskip" data-cid="'+c.id+'" data-date="'+s+'" title="Вернуть дело">'+IC_ARROW+' Вернуть</button>'; }
@@ -1024,10 +1034,12 @@ function todayColHTML(pid,comp,s,grace){
         h+='<div class="meals'+(interactive?'':' ro')+'">';
         for(var mi=0;mi<pdc;mi++){ var lv=meals[mi];
           h+='<div class="meal"><span class="ml">'+(pdc>1?('№'+(mi+1)):'Готовка')+'</span>';
-          if(interactive){ ["e","m","h"].forEach(function(L){ h+='<button class="lvl'+(lv===L?' sel lvl-'+L:'')+'" data-action="meal" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" data-lvl="'+L+'">'+LVLW[L]+'<i>'+LVL[L]+'</i></button>'; }); }
+          if(interactive){ ["e","m","h"].forEach(function(L){ h+='<button class="lvl'+(lv===L?' sel lvl-'+L:'')+'" data-action="meal" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" data-lvl="'+L+'">'+LVLW[L]+'<i>'+LVL[L]+'</i></button>'; });
+            if(mi>=base&&!lv) h+='<button class="mlx" data-action="meal-del" data-cid="'+c.id+'" data-date="'+s+'" data-slot="'+mi+'" title="Убрать приём" aria-label="Убрать приём">×</button>'; }
           else { h+=lv?('<span class="lvl sel lvl-'+lv+'">'+LVLW[lv]+'<i>'+LVL[lv]+'</i></span>'):'<span class="lvl none">не готовила</span>'; }
           h+='</div>';
         }
+        if(interactive) h+='<button class="meal-add" data-action="meal-add" data-cid="'+c.id+'" data-date="'+s+'">+ ещё готовка</button>';
         h+='</div>';
       }
       h+='<div class="meta">';
@@ -1323,6 +1335,8 @@ root.addEventListener("click",function(e){
   if(a==="inc"){ var c=getChore(cid),mx=maxUnits(c,date); commit({t:"units",s:date,cid:cid,val:Math.min(mx,unitsOf(date,cid)+1)}); return; }
   if(a==="cycle"){ var cc=getChore(cid),mc=maxUnits(cc,date),cur=unitsOf(date,cid),nx=(cur+1>mc)?0:cur+1; commit({t:"units",s:date,cid:cid,val:nx}); return; }
   if(a==="meal"){ commit({t:"meal",s:date,cid:cid,slot:+t.getAttribute("data-slot"),lvl:t.getAttribute("data-lvl")}); return; }
+  if(a==="meal-add"){ commit({t:"meal-add",s:date,cid:cid}); return; }
+  if(a==="meal-del"){ commit({t:"meal-del",s:date,cid:cid,slot:+t.getAttribute("data-slot")}); return; }
   if(a==="dec"){ var pdd=(getChore(cid).perDay||1); commit({t:"units",s:date,cid:cid,val:Math.max(0,Math.min(pdd,unitsOf(date,cid))-1)}); return; }
   if(a==="reps-inc"){ var ci=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.min(12,(ci.perDay||1)+1)}}); return; }
   if(a==="reps-dec"){ var cd=getChore(cid); commit({t:"edit",id:cid,patch:{perDay:Math.max(1,(cd.perDay||1)-1)}}); return; }
