@@ -165,6 +165,20 @@ button.lvl:active{transform:scale(.93)}
 .sz-lb{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;color:var(--cy-ink)}
 .sz-lb svg{width:14px;height:14px}
 .sz-item{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text);background:rgba(255,255,255,.65);border-radius:8px;padding:3px 5px 3px 10px}
+.addday{margin:8px 6px 0}
+.add-day-btn{width:100%;border:1.5px dashed var(--line);background:transparent;color:var(--muted);font-weight:600;font-size:13.5px;border-radius:12px;padding:11px;cursor:pointer;transition:.12s}
+.add-day-btn:hover{color:var(--ink);border-color:var(--faint)}
+.picker{margin:8px 6px 0;padding:13px 14px;border-radius:14px}
+.pk-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+.pk-h b{font-family:var(--font-display);font-weight:600;font-size:15px;color:var(--ink)}
+.pk-list{display:flex;flex-direction:column;gap:5px;max-height:320px;overflow-y:auto;margin-top:9px}
+.pkrow{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line-2);background:var(--field);border-radius:10px;padding:9px 12px;cursor:pointer;transition:.12s}
+.pkrow:hover{border-color:var(--cy);background:var(--cy-soft)}
+.pk-t{font-weight:600;font-size:14px;color:var(--text);flex:1;min-width:0}
+.pk-e{font-size:12px;color:var(--muted);white-space:nowrap}
+.pk-plus{font-size:20px;font-weight:700;color:var(--cy-ink);width:22px;text-align:center;flex:0 0 auto}
+.pk-empty{color:var(--muted);font-size:13px;padding:8px 2px}
+.chip.added{color:var(--cy-ink);background:var(--cy-soft);border-color:transparent}
 .mini-btn{border:1px solid var(--line);background:var(--field);color:var(--muted);border-radius:8px;height:28px;min-width:30px;padding:0 7px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:4px;justify-content:center;transition:.12s;white-space:nowrap}
 .mini-btn:hover{color:var(--text);border-color:var(--faint)}
 .mini-btn svg{width:13px;height:13px}
@@ -814,7 +828,7 @@ function getChore(id){ for(var i=0;i<state.chores.length;i++)if(state.chores[i].
 function getPerson(id){ for(var i=0;i<state.people.length;i++)if(state.people[i].id===id)return state.people[i]; return null; }
 function applyOp(o){
   var s=o.s,c;
-  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="meal"||o.t==="meal-add"||o.t==="meal-del"||o.t==="skip"||o.t==="snooze"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
+  if(o.s&&(o.t==="units"||o.t==="toggle"||o.t==="meal"||o.t==="meal-add"||o.t==="meal-del"||o.t==="skip"||o.t==="snooze"||o.t==="add-day"||o.t==="remove-day"||o.t==="dispute"||o.t==="dispute-disagree"||o.t==="dispute-resolve"||o.t==="debt-done"||o.t==="debt-claim"||o.t==="debt-skip"||o.t==="assign")) freezeDay(o.s);
   if(o.t==="units"||o.t==="toggle"){ var v=(o.t==="toggle")?(o.val?1:0):o.val; if(!state.done[s])state.done[s]={}; if(v>0)state.done[s][o.cid]=v; else delete state.done[s][o.cid]; if(v>0&&state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="meal"){ if(!state.meals[s])state.meals[s]={}; var mc=getChore(o.cid),mpd=(mc&&mc.perDay)||2,ma=(state.meals[s][o.cid]||[]).slice(); while(ma.length<mpd)ma.push(null); if(o.slot>=ma.length){ while(ma.length<=o.slot)ma.push(null); } ma[o.slot]=(ma[o.slot]===o.lvl)?null:o.lvl; if(ma.some(function(x){return x;})||ma.length>mpd) state.meals[s][o.cid]=ma; else { delete state.meals[s][o.cid]; if(!Object.keys(state.meals[s]).length)delete state.meals[s]; } }
   else if(o.t==="meal-add"){ if(!state.meals[s])state.meals[s]={}; var mca=getChore(o.cid),mpa=(mca&&mca.perDay)||2,maa=(state.meals[s][o.cid]||[]).slice(); while(maa.length<mpa)maa.push(null); maa.push(null); state.meals[s][o.cid]=maa; }
@@ -824,6 +838,8 @@ function applyOp(o){
   else if(o.t==="reset-ov"){ delete state.overrides[s]; }
   else if(o.t==="snooze"){ var nd=addDays(s,1); if(!state.moved[s])state.moved[s]={}; state.moved[s][o.cid]=1; if(!state.extra[nd])state.extra[nd]={}; state.extra[nd][o.cid]=1; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="unsnooze"){ var un=addDays(s,1); if(state.moved[s]){ delete state.moved[s][o.cid]; if(!Object.keys(state.moved[s]).length)delete state.moved[s]; } if(state.extra[un]){ delete state.extra[un][o.cid]; if(!Object.keys(state.extra[un]).length)delete state.extra[un]; } }
+  else if(o.t==="add-day"){ if(!state.extra[s])state.extra[s]={}; state.extra[s][o.cid]=1; if(o.pid){ if(!state.overrides[s])state.overrides[s]={}; state.overrides[s][o.cid]=o.pid; } if(state.moved[s])delete state.moved[s][o.cid]; }
+  else if(o.t==="remove-day"){ if(state.extra[s]){ delete state.extra[s][o.cid]; if(!Object.keys(state.extra[s]).length)delete state.extra[s]; } if(state.overrides[s]){ delete state.overrides[s][o.cid]; if(!Object.keys(state.overrides[s]).length)delete state.overrides[s]; } if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="dispute"){ if(!state.dispute[s])state.dispute[s]={}; state.dispute[s][o.cid]={by:o.by,reason:o.reason||"",st:"open"}; if(state.done[s])delete state.done[s][o.cid]; if(state.skip[s])delete state.skip[s][o.cid]; }
   else if(o.t==="dispute-disagree"){ if(state.dispute[s]&&state.dispute[s][o.cid]){ state.dispute[s][o.cid].st="disagree"; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
   else if(o.t==="dispute-resolve"){ if(state.dispute[s]){ delete state.dispute[s][o.cid]; if(!Object.keys(state.dispute[s]).length)delete state.dispute[s]; } if(!state.done[s])state.done[s]={}; state.done[s][o.cid]=targetOf(getChore(o.cid),s); }
@@ -924,7 +940,7 @@ function render(){
 
   html+='<div class="sec"><div class="sec-h"><h2>Сегодня</h2><div class="ln"></div></div><div class="cols">';
   order.forEach(function(pid){ html+=todayColHTML(pid,comp,s); });
-  html+='</div>'+snoozeStripHTML(s)+'</div>';
+  html+='</div>'+snoozeStripHTML(s)+pickerHTML(s)+'</div>';
   html+=graceHTML();
   /* pool «Несделанные дела» removed at Egor's request — the «Вчера» grace board is the single catch-up now (poolHTML kept but not rendered) */
 
@@ -934,7 +950,7 @@ function render(){
 
   html+='<div class="foot"><span class="st '+statusName+'" id="st"><span class="dot"></span>'+statusText()+'</span><span class="sp"></span><button class="lk" data-action="help">Как это работает вдвоём?</button></div>';
 
-  root.innerHTML=html; applyChoreFilter();
+  root.innerHTML=html; applyChoreFilter(); applyPickerFilter();
   if(!restored){ restored=true; var y=0; try{ y=+sessionStorage.getItem(SCKEY)||0; }catch(e){} if(y)window.scrollTo(0,y); }
 }
 
@@ -964,6 +980,23 @@ function snoozeStripHTML(s){
   var h='<div class="snoozed"><span class="sz-lb">'+IC_CLOCK+' Перенесено на завтра:</span>';
   ids.forEach(function(id){ var c=getChore(id); h+='<span class="sz-item">'+esc(c.title)+'<button class="mini-btn restore" data-action="unsnooze" data-cid="'+id+'" data-date="'+s+'" title="Вернуть на сегодня">'+IC_ARROW+' Вернуть</button></span>'; });
   return h+'</div>';
+}
+/* ---------- добавить существующее дело в день (разово, из списка) ---------- */
+var pickerOpen=false,pickerQuery="";
+function isDayAdd(c,s){ return !!(c&&!isReactive(c)&&!isCook(c)&&state.extra[s]&&state.extra[s][c.id]&&!isDue(c,s)); } /* дело стоит сегодня только потому, что его добавили разово */
+function pickerHTML(s){
+  if(!pickerOpen) return '<div class="addday"><button class="add-day-btn" data-action="picker-toggle">+ Добавить дело на сегодня</button></div>';
+  var me=ui.me, addable=state.chores.filter(function(c){ return !isReactive(c)&&!isCook(c)&&!occursOn(c,s); }).sort(function(a,b){ var ca=a.cat||'',cb=b.cat||''; return ca<cb?-1:ca>cb?1:(a.title<b.title?-1:1); });
+  var h='<div class="picker glass"><div class="pk-h"><b>Добавить дело '+esc(dativeName(getPerson(me).name))+' на сегодня</b><button class="mini-btn" data-action="picker-toggle">Закрыть</button></div>';
+  h+='<div class="chsearch"><input id="pickersearch" data-action="pksearch" placeholder="Найти дело по названию или разделу…" value="'+esc(pickerQuery)+'" autocomplete="off"></div>';
+  h+='<div class="pk-list">';
+  if(!addable.length) h+='<div class="pk-empty">Все дела уже стоят на сегодня.</div>';
+  addable.forEach(function(c){ h+='<button class="pkrow" data-action="add-day" data-cid="'+c.id+'" data-pid="'+me+'" data-date="'+s+'" data-title="'+esc((c.title||'').toLowerCase())+'" data-cat="'+esc((c.cat||'').toLowerCase())+'"><span class="pk-t">'+esc(c.title)+'</span><span class="pk-e tnum">'+fmtPts(c.points)+' · '+esc(effWord(c.points))+(c.cat?' · '+esc(c.cat):'')+'</span><span class="pk-plus">+</span></button>'; });
+  return h+'</div></div>';
+}
+function applyPickerFilter(){
+  var qy=(pickerQuery||"").trim().toLowerCase(),rows=root.querySelectorAll('.pkrow'),i;
+  for(i=0;i<rows.length;i++){ var t=rows[i].getAttribute('data-title')||'',ct=rows[i].getAttribute('data-cat')||''; rows[i].style.display=(!qy||t.indexOf(qy)>=0||ct.indexOf(qy)>=0)?'':'none'; }
 }
 function poolHTML(s){
   var tails=poolTails();
@@ -1072,6 +1105,7 @@ function todayColHTML(pid,comp,s,grace){
     else if(pd>1){ h+='<span class="chip">'+pd+'×/день</span>'; }
     if(pend)h+='<span class="chip pend">сначала «'+esc(((getChore(c.after.on)||{}).title||'').split(" ")[0].toLowerCase())+' …»</span>';
     if(c.cat)h+='<span class="chip">'+esc(c.cat)+'</span>';
+    if(isDayAdd(c,s))h+='<span class="chip added">добавлено разово</span>';
     if(sk)h+=coveringDay(pid,s)?'<span class="chip cover">снято · подмена</span>':'<span class="chip skipped">пропущено · +'+fmtPts(effortAt(c,s))+' ус.</span>';
     if(dOpen)h+='<span class="chip disp">оспорено'+(rsn?' · «'+esc(rsn)+'»':'')+' · '+esc(dName)+'</span>';
     if(dDis)h+='<span class="chip disagree">разногласие'+(rsn?' · «'+esc(rsn)+'»':'')+'</span>';
@@ -1088,7 +1122,8 @@ function todayColHTML(pid,comp,s,grace){
     } else if(interactive&&!sk){
       h+='<div class="acts"><button class="mini-btn" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">'+IC_ARROW+' Передать '+esc(dativeName(getPerson(other).name))+'</button>';
       if(!isReactive(c)) h+='<button class="mini-btn" data-action="snooze" data-cid="'+c.id+'" data-date="'+s+'" title="Перенести на завтра">'+IC_CLOCK+' Завтра</button>';
-      h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+' Не буду</button></div>';
+      if(isDayAdd(c,s)) h+='<button class="mini-btn skip" data-action="remove-day" data-cid="'+c.id+'" data-date="'+s+'" title="Убрать это дело с сегодня">'+IC_SKIP+' Убрать</button></div>';
+      else h+='<button class="mini-btn skip" data-action="skip" data-cid="'+c.id+'" data-pid="'+pid+'" data-date="'+s+'" title="Не буду — освободить усилия">'+IC_SKIP+' Не буду</button></div>';
     } else if(!interactive&&full){
       if(ui.disputing===dispKey(s,c.id)){
         h+='<div class="acts disp-form"><input id="disputeinput" class="disp-input" type="text" maxlength="80" placeholder="почему? (необязательно)" autocomplete="off"><button class="mini-btn warn-btn" data-action="disp-confirm" data-cid="'+c.id+'" data-date="'+s+'" data-by="'+ui.me+'">'+IC_FLAG+' Оспорить</button><button class="mini-btn" data-action="disp-cancelform" title="Отмена">×</button></div>';
@@ -1345,6 +1380,9 @@ root.addEventListener("click",function(e){
   if(a==="swap"){ commit({t:"assign",s:date,cid:cid,to:t.getAttribute("data-to")}); return; }
   if(a==="snooze"){ commit({t:"snooze",s:date,cid:cid}); return; }
   if(a==="unsnooze"){ commit({t:"unsnooze",s:date,cid:cid}); return; }
+  if(a==="picker-toggle"){ pickerOpen=!pickerOpen; if(!pickerOpen)pickerQuery=""; render(); setTimeout(function(){ var el=document.getElementById("pickersearch"); if(el)el.focus(); },0); return; }
+  if(a==="add-day"){ commit({t:"add-day",s:date,cid:cid,pid:t.getAttribute("data-pid")||ui.me}); return; }
+  if(a==="remove-day"){ commit({t:"remove-day",s:date,cid:cid}); return; }
   if(a==="disp-open"){ ui.disputing=date+"|"+cid; render(); setTimeout(function(){ var el=document.getElementById("disputeinput"); if(el)el.focus(); },0); return; }
   if(a==="disp-cancelform"){ ui.disputing=null; render(); return; }
   if(a==="disp-confirm"){ var di=document.getElementById("disputeinput"); var rs=di?di.value.trim().slice(0,80):""; ui.disputing=null; commit({t:"dispute",s:date,cid:cid,by:t.getAttribute("data-by")||ui.me,reason:rs}); return; }
@@ -1387,6 +1425,7 @@ root.addEventListener("change",function(e){
 });
 root.addEventListener("input",function(e){
   var cs=e.target.closest('[data-action="chsearch"]'); if(cs){ choreQuery=cs.value; applyChoreFilter(); return; }
+  var pk=e.target.closest('[data-action="pksearch"]'); if(pk){ pickerQuery=pk.value; applyPickerFilter(); return; }
   var t=e.target.closest('[data-action="cap"]'); if(!t)return;
   var v=Math.max(0,Math.min(100,+t.value||50)),row=t.closest(".caprow");
   if(row){ var l1=row.querySelector(".caplab.p1"),l2=row.querySelector(".caplab.p2"); if(l1)l1.textContent=getPerson("p1").name+" "+v+"%"; if(l2)l2.textContent=getPerson("p2").name+" "+(100-v)+"%"; }
