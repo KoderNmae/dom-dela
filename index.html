@@ -457,12 +457,12 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"id":"c10","title":"Разобрать холодильник","points":2,"perDay":1,"cat":"Кухня","why":"≈20–30 мин: выкинуть старое, протереть полки","freq":{"t":"dow","d":[1]}},
 {"id":"c11","title":"Поставить вещи на свои места","points":2,"perDay":1,"cat":"Уборка","why":"≈15 мин: разложить разбросанное по квартире","freq":{"t":"daily"}},
 {"id":"c12","title":"Убрать мусор поверхностно","points":1,"perDay":1,"cat":"Мусор","why":"≈5 мин: быстро собрать мусор по комнатам","freq":{"t":"daily"}},
-{"id":"c13","title":"Пропылесосить поверхностно","points":1,"perDay":1,"cat":"Уборка","why":"≈15 мин: пройтись по основным зонам","freq":{"t":"dow","d":[2,5]}},
+{"id":"c13","title":"Пропылесосить поверхностно","points":1,"perDay":1,"cat":"Уборка","why":"≈15 мин: пройтись по основным зонам","freq":{"t":"dow","d":[2,6]}},
 {"id":"c14","title":"Пропылесосить генерально","points":3,"perDay":1,"cat":"Уборка","why":"≈30–40 мин: вся квартира, углы, под мебелью","freq":{"t":"dow","d":[4]}},
 {"id":"c15","title":"Помыть зеркала","points":1,"perDay":1,"cat":"Ванная","why":"≈10 мин: все зеркала в доме","freq":{"t":"dow","d":[6]}},
 {"id":"c16","title":"Помыть унитаз","points":2,"perDay":1,"cat":"Ванная","why":"≈10 мин: почистить и протереть","freq":{"t":"dow","d":[3,6]}},
 {"id":"c17","title":"Помыть раковину и ванну","points":3,"perDay":1,"cat":"Ванная","why":"≈25 мин: оттереть налёт, физически тяжело","freq":{"t":"dow","d":[6]}},
-{"id":"c18","title":"Помыть пол","points":3,"perDay":1,"cat":"Уборка","why":"≈30 мин: вымыть полы во всей квартире","freq":{"t":"dow","d":[4]}},
+{"id":"c18","title":"Помыть пол","points":5,"perDay":1,"cat":"Уборка","why":"≈30 мин: вымыть полы во всей квартире","freq":{"t":"dow","d":[4]}},
 {"id":"c19","title":"Протереть пыль","points":2,"perDay":1,"cat":"Уборка","why":"≈15–20 мин: протереть все поверхности","freq":{"t":"dow","d":[2]}},
 {"id":"c20","title":"Помыть собачьи миски","points":0.5,"perDay":2,"cat":"Собака","why":"≈3 мин за раз, 2 раза в день","freq":{"t":"daily"}},
 {"id":"c21","title":"Поменять постельное бельё","points":3,"perDay":1,"cat":"Спальня","why":"≈25 мин: снять, застелить, отправить в стирку","freq":{"t":"dow","d":[0]}},
@@ -477,7 +477,7 @@ select,.m-n,.m-cat,.m-num{border:1px solid var(--line);background:var(--field);b
 {"id":"c30","title":"Разморозить и помыть холодильник","points":5,"perDay":1,"cat":"Техника","why":"раз в 4 мес: разморозка и полная мойка","freq":{"t":"everyN","n":120,"anchor":"2026-09-25"}},
 {"id":"c31","title":"Пропылесосить и перевернуть матрас","points":3,"perDay":1,"cat":"Спальня","why":"раз в полгода: перевернуть, пропылесосить","freq":{"t":"everyN","n":180,"anchor":"2026-10-01"}},
 {"id":"c32","title":"Протереть плинтусы","points":3,"perDay":1,"cat":"Уборка","why":"≈20–30 мин: пройти плинтусы во всех комнатах","freq":{"t":"everyN","n":14,"anchor":"2026-08-30"}},
-{"id":"c33","title":"Почистить диван от собачьей шерсти","points":2,"perDay":1,"cat":"Собака","why":"≈15 мин, раз в месяц: пройтись по дивану, собрать шерсть","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}},
+{"id":"c33","title":"Почистить диван от собачьей шерсти","points":3,"perDay":1,"cat":"Собака","why":"≈15 мин, раз в месяц: пройтись по дивану, собрать шерсть","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}},
 {"id":"c34","title":"Почистить ковёр от собачьей шерсти","points":3,"perDay":1,"cat":"Собака","why":"≈25 мин, раз в месяц: тщательно пропылесосить ковёр от шерсти","freq":{"t":"everyN","n":30,"anchor":"2026-09-15"}},{"id":"c35","title":"Готовка еды","cook":true,"owner":"p2","points":2,"perDay":2,"cat":"Кухня","why":"2 приёма в день; сложность (лёгкая/средняя/сложная) меняется прямо в задании","freq":{"t":"daily"}}
 ],
 "overrides":{},"done":{},"skip":{},"moved":{},"extra":{}}
@@ -1042,7 +1042,7 @@ function todayColHTML(pid,comp,s,grace){
       h+='</li>';
       return;
     }
-    var sk=isSkipped(s,c.id),pend=isPending(c,s),pd=targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=(u>=pd)&&!pend;
+    var sk=isSkipped(s,c.id),pend=isPending(c,s),pd=(isReactive(c)&&!pend)?maxUnits(c,s):targetOf(c,s),u=Math.min(pd,unitsOf(s,c.id)),full=(u>=pd)&&!pend; /* реактивные: показываем ДОСТИЖИМОЕ (сколько «поставили»), не план — иначе «1 из 2» не закрывается и жмётся в 0 */
     var dsp=state.dispute[s]&&state.dispute[s][c.id], dOpen=dsp&&dsp.st==="open", dDis=dsp&&dsp.st==="disagree";
     var dName=dsp?getPerson(dsp.by).name:'', rsn=(dsp&&dsp.reason)?dsp.reason:'';
     var ok=full&&!sk&&!dOpen;
@@ -1112,7 +1112,7 @@ function calDayHTML(s,today){
     h+='<div class="calcol '+pid+'"><div class="cn">'+esc(getPerson(pid).name)+' · '+fmtPts(pid==="p1"?t.p1:t.p2)+' ус.</div>';
     if(!arr.length)h+='<div class="cempty">—</div>';
     else arr.forEach(function(c){
-      var sk=isSkipped(s,c.id),pend=isPending(c,s),tg=targetOf(c,s),full=(unitsOf(s,c.id)>=tg)&&!pend;
+      var sk=isSkipped(s,c.id),pend=isPending(c,s),tg=(isReactive(c)&&!pend)?maxUnits(c,s):targetOf(c,s),full=(unitsOf(s,c.id)>=tg)&&!pend;
       h+='<div class="calitem'+(full&&!sk?' ok':'')+(sk?' skip':'')+(pend?' pend':'')+'"><span class="cd">'+esc(c.title)+(pend?' <span class="ce">ожидает</span>':(tg>1?' <span class="ce">'+tg+'×</span>':''))+'</span><span class="ce">'+(pend?'—':fmtPts(effortAt(c,s)))+'</span>';
       if(!isPast&&!sk&&!pend)h+='<button class="cs" data-action="swap" data-cid="'+c.id+'" data-to="'+other+'" data-date="'+s+'" title="Передать: '+esc(getPerson(other).name)+'">→</button>';
       h+='</div>';
