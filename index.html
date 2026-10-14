@@ -11,10 +11,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<link rel="stylesheet" href="app.css?v=20261014garden1">
-<link rel="stylesheet" href="garden.css?v=20261014garden1">
+<link rel="stylesheet" href="app.css?v=20261014garden2">
+<link rel="stylesheet" href="garden.css?v=20261014garden2">
 <script src="lucide.min.js?v=1.17.0"></script>
-<script src="garden.js?v=20261014garden1"></script>
+<script src="garden-engine.js?v=20261014garden2"></script>
+<script src="garden.js?v=20261014garden2"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -1099,8 +1100,8 @@ var garden=window.createHomeGarden({
  root:root,preview:PREVIEW,room:ROOM_ID,getState:function(){return state;},getMe:function(){return ui.me;},
  today:todayStr,addDays:addDays,monday:mondayOf,week:function(){return weekDates(0);},person:getPerson,
  chore:getChore,assign:computeAssignments,progress:progress,target:targetOf,units:unitsOf,
- cooked:cookCooked,cookSlots:cookSlots,isCook:isCook,isSkipped:isSkipped,escape:esc,
- connected:function(){return online&&fbReady;},
+ cooked:cookCooked,cookEffort:cookDone,assignedEffort:effortAt,cookSlots:cookSlots,isCook:isCook,isSkipped:isSkipped,escape:esc,
+ connected:function(){return online&&fbReady;},saving:function(){return !!saveTimer||statusName==="saving";},
  navigate:function(view){ui.view=view;saveUI();render();window.scrollTo(0,0);},
  redraw:render
 });
