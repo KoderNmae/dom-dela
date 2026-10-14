@@ -11,7 +11,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<link rel="stylesheet" href="app.css?v=5">
+<link rel="stylesheet" href="app.css?v=20261014garden1">
+<link rel="stylesheet" href="garden.css?v=20261014garden1">
+<script src="lucide.min.js?v=1.17.0"></script>
+<script src="garden.js?v=20261014garden1"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -376,7 +379,7 @@ function applyOp(o){
   else if(o.t==="del"){ state.chores=state.chores.filter(function(x){return x.id!==o.id;}); }
   else if(o.t==="edit"){ c=getChore(o.id); if(c){ for(var k in o.patch)c[k]=o.patch[k]; } }
 }
-function commit(o){ applyOp(o); render(); scheduleSave(); }
+function commit(o){ var before=garden?garden.earned():0; applyOp(o); render(); scheduleSave(); if(garden)garden.onChoreChange(before); }
 
 /* ---------- render ---------- */
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];}); }
@@ -438,6 +441,7 @@ function digestHTML(){
 /* Presentation only: navigation and task details never change household data. */
 /* Lucide Icons: ISC; includes Feather-derived icons under MIT. See THIRD-PARTY-LICENSES.txt. */
 function appIcon(name){
+  if(window.homeGardenIcon && (name==='sprout'||name==='award'))return window.homeGardenIcon(name);
   var paths={"home":"<path d=\"M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8\" />\n  <path d=\"M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" />","today":"<path d=\"M8 2v3\" />\n  <path d=\"M16 2v3\" />\n  <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" />\n  <path d=\"M3 9h18\" />\n  <path d=\"m9 15 2 2 4-4\" />","week":"<path d=\"M8 2v3\" />\n  <path d=\"M16 2v3\" />\n  <rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\" />\n  <path d=\"M3 9h18\" />\n  <path d=\"M8 13h.01\" />\n  <path d=\"M12 13h.01\" />\n  <path d=\"M16 13h.01\" />\n  <path d=\"M8 17h.01\" />\n  <path d=\"M12 17h.01\" />\n  <path d=\"M16 17h.01\" />","stats":"<path d=\"M12 16v5\" />\n  <path d=\"M16 14.639V21\" />\n  <path d=\"M20 10.656V21\" />\n  <path d=\"m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15\" />\n  <path d=\"M4 18.463V21\" />\n  <path d=\"M8 14.656V21\" />","settings":"<path d=\"M10 5H3\" />\n  <path d=\"M12 19H3\" />\n  <path d=\"M14 3v4\" />\n  <path d=\"M16 17v4\" />\n  <path d=\"M21 12h-9\" />\n  <path d=\"M21 19h-5\" />\n  <path d=\"M21 5h-7\" />\n  <path d=\"M8 10v4\" />\n  <path d=\"M8 12H3\" />","kitchen":"<path d=\"M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2\" />\n  <path d=\"M7 2v20\" />\n  <path d=\"M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7\" />","laundry":"<path d=\"M3 6h3\" />\n  <path d=\"M17 6h.01\" />\n  <rect width=\"18\" height=\"20\" x=\"3\" y=\"2\" rx=\"2\" />\n  <circle cx=\"12\" cy=\"13\" r=\"5\" />\n  <path d=\"M12 18a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 1 0-5\" />","cleaning":"<path d=\"m16 22-1-4\" />\n  <path d=\"M19 14a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2h-3a1 1 0 0 1-1-1V4a2 2 0 0 0-4 0v5a1 1 0 0 1-1 1H6a2 2 0 0 0-2 2v1a1 1 0 0 0 1 1\" />\n  <path d=\"M19 14H5l-1.973 6.767A1 1 0 0 0 4 22h16a1 1 0 0 0 .973-1.233z\" />\n  <path d=\"m8 22 1-4\" />","trash":"<path d=\"M10 11v6\" />\n  <path d=\"M14 11v6\" />\n  <path d=\"M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6\" />\n  <path d=\"M3 6h18\" />\n  <path d=\"M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2\" />","pet":"<circle cx=\"11\" cy=\"4\" r=\"2\" />\n  <circle cx=\"18\" cy=\"8\" r=\"2\" />\n  <circle cx=\"20\" cy=\"16\" r=\"2\" />\n  <path d=\"M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.84 1.045Q6.52 17.48 4.46 16.84A3.5 3.5 0 0 1 5.5 10Z\" />","bed":"<path d=\"M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8\" />\n  <path d=\"M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4\" />\n  <path d=\"M12 4v6\" />\n  <path d=\"M2 18h20\" />","shopping":"<path d=\"m15 11-1 9\" />\n  <path d=\"m19 11-4-7\" />\n  <path d=\"M2 11h20\" />\n  <path d=\"m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4\" />\n  <path d=\"M4.5 15.5h15\" />\n  <path d=\"m5 11 4-7\" />\n  <path d=\"m9 11 1 9\" />","bath":"<path d=\"M10 4 8 6\" />\n  <path d=\"M17 19v2\" />\n  <path d=\"M2 12h20\" />\n  <path d=\"M7 19v2\" />\n  <path d=\"M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5\" />","more":"<circle cx=\"12\" cy=\"12\" r=\"1\" />\n  <circle cx=\"19\" cy=\"12\" r=\"1\" />\n  <circle cx=\"5\" cy=\"12\" r=\"1\" />","plus":"<path d=\"M5 12h14\" />\n  <path d=\"M12 5v14\" />","help":"<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\" />\n  <path d=\"M12 17h.01\" />","chevron":"<path d=\"m9 18 6-6-6-6\" />","check":"<path d=\"M20 6 9 17l-5-5\" />","arrow":"<path d=\"M5 12h14\" />\n  <path d=\"m12 5 7 7-7 7\" />","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <path d=\"M12 6v6h4\" />","skip":"<circle cx=\"12\" cy=\"12\" r=\"10\" />\n  <line x1=\"9\" x2=\"15\" y1=\"15\" y2=\"9\" />","flag":"<path d=\"M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528\" />","star":"<path d=\"M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.123 2.123 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.123 2.123 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.122 2.122 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.122 2.122 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.122 2.122 0 0 0 1.597-1.16z\" />","tech":"<rect width=\"20\" height=\"14\" x=\"2\" y=\"3\" rx=\"2\" />\n  <line x1=\"8\" x2=\"16\" y1=\"21\" y2=\"21\" />\n  <line x1=\"12\" x2=\"12\" y1=\"17\" y2=\"21\" />","general":"<path d=\"M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z\" />\n  <path d=\"M12 22V12\" />\n  <polyline points=\"3.29 7 12 12 20.71 7\" />\n  <path d=\"m7.5 4.27 9 5.15\" />"};
   return '<svg class="app-icon" viewBox="0 0 24 24" aria-hidden="true">'+(paths[name]||paths.home)+'</svg>';
 }
@@ -451,7 +455,7 @@ function taskMenuHTML(c,s){
   return '<button class="task-more" data-action="task-menu" data-cid="'+esc(c.id)+'" data-date="'+s+'" aria-label="Действия и подробности: '+esc(c.title)+'" aria-expanded="'+open+'"><span>Подробности</span>'+appIcon('more')+'</button>';
 }
 function navHTML(view,remaining,mobile){
-  var nav=[['today','Сегодня','today'],['week','Неделя','week'],['stats','Статистика','stats'],['settings','Настройки','settings']];
+  var nav=[['today','Дела','today'],['week','Неделя','week'],['garden','Сад','sprout'],['success','Успехи','award']];
   return '<nav class="'+(mobile?'mobile-nav':'app-nav')+'" aria-label="'+(mobile?'Основная навигация':'Разделы приложения')+'">'+nav.map(function(n){
     return '<button class="nav-item'+(view===n[0]?' active':'')+'" data-action="view" data-view="'+n[0]+'"'+(view===n[0]?' aria-current="page"':'')+'>'+appIcon(n[2])+'<span>'+n[1]+'</span>'+(n[0]==='today'&&remaining>0?'<span class="nav-count tnum" aria-label="Осталось дел">'+remaining+'</span>':'')+'</button>';
   }).join('')+'</nav>';
@@ -500,26 +504,30 @@ function weekPeekHTML(s){
 }
 function render(){
   var s=todayStr(),comp=computeAssignments(s),me=ui.me,other=me==='p1'?'p2':'p1';
-  var view=['today','week','stats','settings'].indexOf(ui.view)>=0?ui.view:'today';
-  var titles={today:'Сегодня',week:'На этой неделе',stats:'Статистика',settings:'Настройки дома'};
+  var view=['today','week','garden','success','stats','settings'].indexOf(ui.view)>=0?ui.view:'today';
+  var titles={today:'Сегодня',week:'На этой неделе',garden:'Наш сад',success:'Ваши успехи',stats:'Статистика',settings:'Настройки дома'};
   var remaining=tasksFor(me,comp,s).filter(function(c){return !isSkipped(s,c.id)&&!isPending(c,s)&&(isCook(c)?cookCooked(s,c.id)<cookSlots(s,c.id):unitsOf(s,c.id)<targetOf(c,s));}).length;
-  var subtitles={today:esc(getPerson(me).name)+', '+(remaining?'осталось '+remaining+' '+plural(remaining,'дело','дела','дел')+'.':'активных дел на сегодня нет.'),week:'Дела семьи и нагрузка по дням.',stats:'Как распределялись и выполнялись дела.',settings:'Участники, распределение и список дел.'};
+  var subtitles={today:esc(getPerson(me).name)+', '+(remaining?'осталось '+remaining+' '+plural(remaining,'дело','дела','дел')+'.':'активных дел на сегодня нет.'),week:'Дела семьи и нагрузка по дням.',garden:'Место, которое растёт вместе с вами.',success:'Здесь виден каждый вклад.',stats:'Как распределялись и выполнялись дела.',settings:'Участники, распределение и список дел.'};
   var html='<div class="app-shell"><aside class="sidebar"><div class="brand"><span class="brand-mark">'+appIcon('home')+'</span><div class="brand-copy"><div class="brand-name">Домашние дела</div><div class="brand-sub">Семейное пространство</div></div></div>'+navHTML(view,remaining,false);
   html+='<div class="sidebar-family"><div class="family-card"><div class="family-label">Участники дома</div><div class="family-members"><div class="avatar-pair">'+avatarHTML('p1')+avatarHTML('p2')+'</div><span class="family-names">'+esc(getPerson('p1').name)+' и '+esc(getPerson('p2').name)+'</span></div></div><button class="sidebar-help" data-action="help" aria-label="Как пользоваться вдвоём">'+appIcon('help')+'<span>Как всё устроено</span></button></div></aside>';
   html+='<div class="app-main"><header class="topbar"><div class="product-wordmark">Домашние дела<small>Наш дом</small></div><div class="mobile-brand"><span class="brand-mark">'+appIcon('home')+'</span><span>Домашние дела</span></div><div class="me"><span>Это я</span>';
   state.people.forEach(function(p){html+='<button class="'+p.id+(me===p.id?' on':'')+'" style="'+pcVars(p.id)+'" data-action="me" data-pid="'+p.id+'" aria-pressed="'+(me===p.id)+'">'+esc(p.name)+'</button>';});
   html+='</div></header><main class="page" id="page-content" aria-labelledby="page-title"><div class="hd"><div class="hero-copy"><div class="eyebrow">'+appIcon('week')+esc(fmtDate(s).charAt(0).toUpperCase()+fmtDate(s).slice(1))+'</div><h1 class="ttl" id="page-title">'+titles[view]+'</h1><p class="page-sub">'+subtitles[view]+'</p></div>';
 
-  html+='</div>';
+  html+='<button class="page-settings" data-action="view" data-view="settings" aria-label="Настройки дома">'+appIcon('settings')+'</button></div>';
   if(view==='today'){
     var pr=progress(me,s,comp),op=progress(other,s,comp),compact=window.matchMedia('(max-width:780px)').matches;
-    html+=weekPeekHTML(s)+'<div class="cols today-layout"><section class="primary-pane" aria-labelledby="tasks-heading"><div class="board-heading"><h2 id="tasks-heading">Мои дела<span class="board-count tnum">'+pr.countDone+' из '+pr.count+'</span></h2><button class="primary-action" data-action="picker-toggle" aria-label="Добавить дело на сегодня">'+appIcon('plus')+'Добавить дело</button></div>'+todayColHTML(me,comp,s)+snoozeStripHTML(s)+pickerHTML(s)+'</section>';
+    html+='<div class="cols today-layout"><section class="primary-pane" aria-labelledby="tasks-heading"><div class="board-heading"><h2 id="tasks-heading">Мои дела<span class="board-count tnum">'+pr.countDone+' из '+pr.count+'</span></h2><button class="primary-action" data-action="picker-toggle" aria-label="Добавить дело на сегодня">'+appIcon('plus')+'Добавить дело</button></div>'+todayColHTML(me,comp,s)+snoozeStripHTML(s)+pickerHTML(s)+'</section>';
     html+='<aside class="house-pane"><details class="house-details"'+(!compact||ui.houseOpen?' open':'')+'><summary>Дом сегодня'+appIcon('chevron')+'<span>'+esc(getPerson(other).name)+' · '+op.countDone+' из '+op.count+' дел выполнено</span></summary>'+todayColHTML(other,comp,s)+balanceHTML(s,comp)+'<div class="daily-progress" style="'+pcVars(me)+'"><div class="daily-progress-label"><span>Ваши усилия выполнены на</span><b class="tnum">'+pr.pct+'%</b></div><div class="bar" role="progressbar" aria-label="Ваш прогресс" aria-valuemin="0" aria-valuemax="100" aria-valuenow="'+pr.pct+'"><i style="width:'+pr.pct+'%"></i></div></div></details></aside></div>'+graceHTML()+digestHTML();
+  }else if(view==='garden'||view==='success'){
+    html+='<div id="home-game-preview"></div>';
   }else{
     html+='<div class="focused-view" data-view="'+view+'">'+(view==='week'?calendarHTML():view==='stats'?analyticsHTML():manageHTML())+'</div>';
   }
   html+='<footer class="foot"><span class="st '+statusName+'" id="st" role="status"><span class="dot"></span>'+statusText()+'</span><span class="sp"></span>'+(PREVIEW?'<span class="preview-label">Предпросмотр · ваши правила дел</span>':'')+'<button class="lk" data-action="help">Как пользоваться вдвоём</button></footer></main>'+navHTML(view,remaining,true)+'</div></div>';
   root.innerHTML=html;decorateTaskCards();applyChoreFilter();applyPickerFilter();
+  document.body.classList.toggle('garden-open',view==='garden');
+  if(garden)garden.mount(view);
   if(!restored){restored=true;var y=0;try{y=+sessionStorage.getItem(SCKEY)||0;}catch(e){}if(y)window.scrollTo(0,y);}
 }
 
@@ -945,7 +953,7 @@ root.addEventListener("click",function(e){
   }
   if(a==="view"){
     var nextView=t.getAttribute('data-view');
-    if(['today','week','stats','settings'].indexOf(nextView)<0)return;
+    if(['today','week','garden','success','stats','settings'].indexOf(nextView)<0)return;
     ui.view=nextView;ui.openTask=null;saveUI();render();window.scrollTo(0,0);
     document.getElementById('page-title').setAttribute('tabindex','-1');
     document.getElementById('page-title').focus({preventScroll:true});return;
@@ -1075,6 +1083,7 @@ function init(){
   try{
     firebase.initializeApp(FIREBASE_CONFIG);
     var db=firebase.database();
+    garden.connect(db);
     fbRef=db.ref("rooms/"+ROOM_ID+"/state");
     db.ref(".info/connected").on("value",function(snap){ online=!!snap.val(); if(statusName!=="saving")setStatus(online?"saved":"offline"); });
     fbRef.on("value",function(snap){
@@ -1086,6 +1095,15 @@ function init(){
     },function(){ setStatus("error"); });
   }catch(e){ startLocal(); }
 }
+var garden=window.createHomeGarden({
+ root:root,preview:PREVIEW,room:ROOM_ID,getState:function(){return state;},getMe:function(){return ui.me;},
+ today:todayStr,addDays:addDays,monday:mondayOf,week:function(){return weekDates(0);},person:getPerson,
+ chore:getChore,assign:computeAssignments,progress:progress,target:targetOf,units:unitsOf,
+ cooked:cookCooked,cookSlots:cookSlots,isCook:isCook,isSkipped:isSkipped,escape:esc,
+ connected:function(){return online&&fbReady;},
+ navigate:function(view){ui.view=view;saveUI();render();window.scrollTo(0,0);},
+ redraw:render
+});
 init();
 })();
 </script>
