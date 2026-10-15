@@ -136,7 +136,7 @@ function apply(input,cmd,ctx){
   s.vacation=cmd.days?{start:real,end:real+Math.max(1,Math.min(60,cmd.days))*DAY}:null;
   result.message=cmd.days?'Сад отдыхает. Рост и высыхание приостановлены.':'С возвращением! Сад продолжает расти.';break;
  }
- case 'thank':if(!ctx.thank||s.thanks[ctx.thank.key])throw Error('Благодарность уже отправлена.');else{s.thanks[ctx.thank.key]=ctx.thank.value;result.message='Спасибо за заботу о доме!';}break;
+ case 'thank':if(!ctx.thank||s.thanks[ctx.thank.key])throw Error('Благодарность уже отправлена.');else{s.thanks[ctx.thank.key]={...ctx.thank.value,at:now};result.message='Спасибо за заботу о доме!';}break;
  case 'reward':if(!['cinema','dinner','games'].includes(cmd.reward))throw Error('Выберите награду.');else s.rewards[ctx.week]=cmd.reward;break;
  case 'celebrate':if(!ctx.weekGoalDone||s.celebrations[ctx.week])throw Error('Цель ещё не выполнена или уже отмечена.');else{s.celebrations[ctx.week]=true;result.message='Пусть таких вечеров будет больше!';}break;
  case 'migrate':case 'income':break;

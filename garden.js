@@ -11,9 +11,10 @@ window.createHomeGarden=function(api){
  const now=()=>Date.now()+offset,saveUI=()=>{try{localStorage.setItem(viewKey,JSON.stringify(local));}catch(e){}},canAnimate=()=>local.motion&&!matchMedia('(prefers-reduced-motion:reduce)').matches;
  const button=(action,label,cls='',attrs='')=>'<button type="button" data-garden="'+action+'" class="'+cls+'" '+attrs+'>'+label+'</button>';
  const datum=id=>'data-id="'+esc(id)+'"',uid=()=>crypto.randomUUID(),random=()=>crypto.getRandomValues(new Uint32Array(1))[0]/4294967296;
+ const notifications=window.createHomeNotifications({root:api.root,room:api.room,preview:api.preview,getMe:api.getMe,person:api.person,escape:esc,icon,connected:api.connected,isReady:()=>ready});
  const dayText=ms=>ms<E.DAY?'меньше дня':Math.ceil(ms/E.DAY)+' дн.';
  const zoneName=id=>id==='meadow'?'Цветочная поляна':'Участок '+(Number(id.split('-')[1])+1);
- function receive(value){try{const next=E.migrate(value,now());shared=next;if(!shared.zones.includes(local.zone))local.zone='meadow';try{localStorage.setItem(key,JSON.stringify(shared));}catch(e){}return true;}catch(e){ready=false;notice(e.message);return false;}}
+ function receive(value){try{const next=E.migrate(value,now());shared=next;if(!shared.zones.includes(local.zone))local.zone='meadow';try{localStorage.setItem(key,JSON.stringify(shared));}catch(e){}notifications.receive(shared.thanks);return true;}catch(e){ready=false;notice(e.message);return false;}}
  try{receive(JSON.parse(localStorage.getItem(key)||localStorage.getItem(prefix+'.garden.v1')||'null'));}catch(e){}
  function sourceKey(day,id){return day+'_'+encodeURIComponent(id).replaceAll('.','%2E');}
  function entries(){
@@ -46,7 +47,7 @@ window.createHomeGarden=function(api){
  }
  function context(){const all=entries(),g=goal(),last=all.filter(e=>e.person&&e.person!==api.getMe()&&e.day===api.today()).at(-1);return {now:now(),sources:Object.fromEntries(all.map(e=>[e.source,e.drops])),rates:Object.fromEntries(all.filter(e=>!e.cook).map(e=>[e.source,e.rate])),units:all.reduce((s,e)=>s+e.units,0),goals:goals(all),week:g.key,weekGoalDone:g.total>0&&g.done===g.total,thank:last?{key:thankKey(last),value:{from:api.getMe(),to:last.person,title:last.title,day:last.day}}:null};}
  function notice(message){let el=document.getElementById('garden-notice');if(!el){el=document.createElement('div');el.id='garden-notice';el.setAttribute('role','status');el.setAttribute('aria-live','polite');document.body.appendChild(el);}el.textContent=message;el.hidden=false;clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>el.hidden=true,5000);}
- function refresh(){if(currentView==='garden'){paintScene();renderDialog();}else api.redraw();}
+ function refresh(){if(currentView==='garden'){paintScene();renderDialog();}else api.redraw();notifications.mount();}
  function choreToken(state){
   function canonical(v){if(v===null||v===undefined)return null;if(typeof v!=='object')return v;const keys=Object.keys(v).sort(),out={};for(const k of keys){const item=canonical(v[k]);if(item!==null)out[k]=item;}return Object.keys(out).length?out:null;}
   return JSON.stringify(canonical({done:state?.done,meals:state?.meals,debt:state?.debt,skip:state?.skip}));
@@ -76,6 +77,7 @@ window.createHomeGarden=function(api){
  function queueIncome(){if(incomeQueued||pending||!ready||(!api.preview&&!api.connected())||!E.incomeNeeded(shared,context()))return;incomeQueued=true;queueMicrotask(()=>{incomeQueued=false;if(!pending)act({type:'income'},{quiet:true});});}
  function connect(db){
   if(api.preview)return;
+  notifications.connect(db);
   choreRef=db.ref('rooms/'+api.room+'/state');
   db.ref('.info/serverTimeOffset').on('value',snap=>{offset=Number(snap.val())||0;});
   ref=db.ref('rooms/'+api.room+'/gardenV2');let starting=false;
@@ -96,7 +98,7 @@ window.createHomeGarden=function(api){
  function art(id,stage=2){const p=E.species[id]||E.decor[id];if(!p)return '';const legacy=p.legacy!==undefined||stage<2,idx=p.legacy===undefined?0:p.legacy;return '<span aria-hidden="true" class="g2-art '+(legacy?'legacy':'collection atlas-'+p.art)+'" style="background-position:'+(legacy?(stage*50)+'% '+(idx*50)+'%':((p.art%4)*100/3)+'% '+(Math.floor(p.art/4)*100/3)+'%')+'"></span>';}
  function active(){return Object.values(shared.plants).filter(p=>!p.stored);}
  function paintStatus(){const el=document.querySelector('.g2-status');if(el)el.textContent=api.preview?'Предпросмотр':pending?'Сохраняем…':!ready?'Подключаем…':!api.connected()?'Без связи':'';document.querySelector('.g2-scene')?.setAttribute('aria-busy',String(pending));}
- function sceneHTML(){return '<section class="g2-scene '+(canAnimate()?'g2-motion':'')+'" aria-label="Наш семейный сад"><div class="g2-viewport" tabindex="0" aria-label="Карта сада. Перемещайте пальцем, приближайте двумя пальцами. Стрелки перемещают карту."><div class="g2-world"><span class="g2-pond"></span><div class="g2-objects"></div></div></div><header class="g2-hud">'+button('back',icon('arrow-left')+'<span>Дела</span>','g2-back')+button('water-info',icon('droplets')+'<b class="g2-wallet"></b><small class="g2-capacity"></small>','g2-resource','aria-label="Запас капель и стоимость полива"')+button('menu',icon('menu'),'g2-round','aria-label="Меню сада и обучение"')+'</header><div class="g2-zone"></div><div class="g2-zoom">'+button('zoom-in',icon('plus'),'g2-round','aria-label="Приблизить"')+button('zoom-out',icon('minus'),'g2-round','aria-label="Отдалить"')+button('center',icon('locate-fixed'),'g2-round','aria-label="Показать все посадки"')+'</div><div class="g2-guidance"></div><div class="g2-dock">'+[['seeds','sprout','Посадить'],['water-info','droplets','Полить'],['inventory','backpack','Запасы'],['shop','store','Лавка']].map(([a,i,t])=>button(a,icon(i)+'<span>'+t+'</span>')).join('')+'</div><span class="g2-status" role="status"></span></section>';}
+ function sceneHTML(){return '<section class="g2-scene '+(canAnimate()?'g2-motion':'')+'" aria-label="Наш семейный сад"><div class="g2-viewport" tabindex="0" aria-label="Карта сада. Перемещайте пальцем, приближайте двумя пальцами. Стрелки перемещают карту."><div class="g2-world"><span class="g2-pond"></span><div class="g2-objects"></div></div></div><header class="g2-hud">'+button('back',icon('arrow-left')+'<span>Дела</span>','g2-back')+button('water-info',icon('droplets')+'<b class="g2-wallet"></b><small class="g2-capacity"></small>','g2-resource','aria-label="Запас капель и стоимость полива"')+notifications.bell('g2-round')+button('menu',icon('menu'),'g2-round','aria-label="Меню сада и обучение"')+'</header><div class="g2-zone"></div><div class="g2-zoom">'+button('zoom-in',icon('plus'),'g2-round','aria-label="Приблизить"')+button('zoom-out',icon('minus'),'g2-round','aria-label="Отдалить"')+button('center',icon('locate-fixed'),'g2-round','aria-label="Показать все посадки"')+'</div><div class="g2-guidance"></div><div class="g2-dock">'+[['seeds','sprout','Посадить'],['water-info','droplets','Полить'],['inventory','backpack','Запасы'],['shop','store','Лавка']].map(([a,i,t])=>button(a,icon(i)+'<span>'+t+'</span>')).join('')+'</div><span class="g2-status" role="status"></span></section>';}
  function paintScene(){
   const scene=document.querySelector('.g2-scene');if(!scene)return;scene.classList.toggle('g2-motion',canAnimate());scene.classList.toggle('is-watering',visualEffect==='water');
   const objects=[],locations=E.locations(shared,local.zone),placing=!!placement;
@@ -151,7 +153,7 @@ window.createHomeGarden=function(api){
   host.appendChild(dialog);dialog.showModal();dialog.scrollTop=currentScroll;if(focusAction)dialog.querySelector('[data-garden="'+focusAction+'"]')?.focus({preventScroll:true});
  }
  function open(type,extra={}){focusBefore=document.activeElement;sheet={type,...extra};renderDialog();}
- function closeDialog(){if(sheet?.type==='tutorial'){local.tutorial=2;saveUI();}sheet=null;document.getElementById('garden-dialog')?.close();document.getElementById('garden-dialog')?.remove();if(focusBefore?.isConnected)focusBefore.focus({preventScroll:true});}
+ function closeDialog(){if(sheet?.type==='tutorial'){local.tutorial=2;saveUI();}sheet=null;document.getElementById('garden-dialog')?.close();document.getElementById('garden-dialog')?.remove();if(focusBefore?.isConnected)focusBefore.focus({preventScroll:true});queueMicrotask(()=>notifications.mount());}
  function beginPlacement(data){placement=data;closeDialog();paintScene();if(!E.locations(shared,local.zone).some(p=>!E.occupied(shared,local.zone,p.slot,data.id)))open('zones');}
  function goalLink(){const g=goal();return button('goal',icon('flag')+'<span>Цель недели · уютная кухня</span><b>'+(g.total?g.done+' из '+g.total:'Выбрать дела')+'</b>'+icon('chevron-right'),'family-goal');}
  function thankKey(e){return [e.day,encodeURIComponent(e.id).replaceAll('.','%2E'),api.getMe()].join('_');}
@@ -164,7 +166,7 @@ window.createHomeGarden=function(api){
   currentView=view;observer?.disconnect();const host=document.getElementById('home-game-preview');
   if(view==='garden'){host.innerHTML=sceneHTML();setupScene();paintScene();if(local.tutorial<2&&!sheet){sheet={type:'tutorial',step:0};}renderDialog();}
   else{placement=null;if(view==='success')host.innerHTML=successHTML();if(view==='today')api.root.querySelector('.primary-pane')?.insertAdjacentHTML('beforeend','<div class="family-extras">'+goalLink()+thanksRow()+'</div>');if(view==='week')api.root.querySelector('.focused-view')?.insertAdjacentHTML('afterbegin','<div class="family-week">'+rhythmHTML()+goalLink()+'</div>');renderDialog();}
-  queueIncome();
+  notifications.mount();queueIncome();
  }
  async function handle(action,el){const id=el.dataset.id;
   if(action==='close'){closeDialog();return;}if(action==='back'||action==='stats'){closeDialog();placement=null;api.navigate(action==='stats'?'stats':'today');return;}
