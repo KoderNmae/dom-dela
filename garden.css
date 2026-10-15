@@ -94,7 +94,7 @@
 .g2-art{display:block;background-repeat:no-repeat;pointer-events:none}
 .g2-art.legacy{background-image:url('garden-world-plants.webp');background-size:300% 300%}
 .g2-art.collection{background-image:url('garden-collection.webp');background-size:400% 400%}
-.g2-ground{position:absolute;width:84px;height:32px;background:#eff7d963;border:2px solid #e9f3d6b3;border-radius:50%;left:calc(50% - 42px);bottom:12px;box-shadow:0 3px 4px #31502824;pointer-events:none}
+.g2-ground{position:absolute;width:94px;height:34px;background:radial-gradient(ellipse,#f6ffdf55,transparent 72%);border:1px solid #f4ffdf30;border-radius:50%;left:calc(50% - 47px);bottom:12px;box-shadow:0 4px 8px #31502820;pointer-events:none;transition:background .2s,box-shadow .2s,border-color .2s}
 .g2-marker{position:absolute;right:11px;top:13px;width:42px;height:42px;border:2px solid #fff9;border-radius:50%;display:grid;place-items:center;background:#fdfef9f5;color:#36533b;box-shadow:0 3px 8px #18371a44;pointer-events:none}
 #home-game-preview .g2-marker .app-icon{width:23px;height:23px}
 .g2-marker.ready{background:#3d654a;color:#fffef4}
@@ -107,6 +107,17 @@
 .g2-motion .g2-sway{animation:g2-sway 5.8s ease-in-out var(--phase) infinite alternate}
 .g2-motion .is-wilted .g2-sway{animation:none}
 .g2-motion .g2-marker.ready{animation:g2-pulse 2.5s ease-in-out infinite}
+.g2-object{transition:filter .18s,scale .18s}
+.g2-object:active{scale:1.035;filter:brightness(1.08)}
+.g2-object:focus-visible .g2-ground{border-color:#f7ffdf;box-shadow:0 0 18px #f5ffdba8}
+.g2-object.is-ready .g2-ground{background:radial-gradient(ellipse,#f9efb885,transparent 74%);border-color:#fff2ba60;box-shadow:0 0 16px #f7eab94d}
+.g2-seed-glimmer{position:absolute;left:27%;top:30%;width:6px;height:6px;background:#fff8d6;border-radius:50%;box-shadow:0 0 8px #fffbd8,62px 30px 0 -1px #fff8d6;pointer-events:none;opacity:.8}
+.g2-motion .g2-seed-glimmer{animation:g2-soft-glimmer 4.8s ease-in-out var(--phase) infinite}
+.g2-object .g2-marker.needs-water{width:28px;height:28px;right:22px;top:24px;border-width:1px;background:#f4f8eddd;box-shadow:0 2px 5px #18371a26;color:#547b80}
+#home-game-preview .g2-marker.needs-water .app-icon{width:16px;height:16px}
+.g2-object.is-wilted .g2-marker.needs-water{color:#886b42;background:#f7efdce8}
+@keyframes g2-soft-glimmer{0%,100%{opacity:.35;scale:.85}50%{opacity:.95;scale:1.1}}
+@media(hover:hover){.g2-object:hover .g2-ground{border-color:#f7ffdfc2;box-shadow:0 0 18px #f5ffdb70}.g2-object:hover{filter:brightness(1.06)}}
 .g2-motion .g2-slot{animation:g2-slot 2s ease-in-out infinite alternate}
 .g2-motion .hg-sheet{animation:g2-sheet .25s ease-out}
 .g2-pond{position:absolute;left:1260px;top:390px;width:140px;height:60px;border:2px solid #eff6c22e;border-radius:50%;pointer-events:none}

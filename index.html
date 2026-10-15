@@ -11,12 +11,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<link rel="stylesheet" href="app.css?v=20261015notifications1">
-<link rel="stylesheet" href="garden.css?v=20261015notifications1">
+<link rel="stylesheet" href="app.css?v=20261015notifications2">
+<link rel="stylesheet" href="garden.css?v=20261015notifications2">
 <script src="lucide.min.js?v=1.17.0"></script>
-<script src="garden-engine.js?v=20261015notifications1"></script>
-<script src="notifications.js?v=20261015notifications1"></script>
-<script src="garden.js?v=20261015notifications1"></script>
+<script src="garden-engine.js?v=20261015notifications2"></script>
+<script src="notification-engine.js?v=20261015notifications2"></script>
+<script src="notifications.js?v=20261015notifications2"></script>
+<script src="garden.js?v=20261015notifications2"></script>
 </head>
 <body>
 <div id="root"></div>
@@ -381,7 +382,7 @@ function applyOp(o){
   else if(o.t==="del"){ state.chores=state.chores.filter(function(x){return x.id!==o.id;}); }
   else if(o.t==="edit"){ c=getChore(o.id); if(c){ for(var k in o.patch)c[k]=o.patch[k]; } }
 }
-function commit(o){ var before=garden?garden.earned():0; applyOp(o); render(); scheduleSave(); if(garden)garden.onChoreChange(before); }
+function commit(o){ var before=garden?garden.earned():0, notificationBefore=garden?garden.beforeChoreEdit(o):null; applyOp(o); if(garden)garden.afterChoreEdit(o,notificationBefore); render(); scheduleSave(); if(garden)garden.onChoreChange(before); }
 
 /* ---------- render ---------- */
 function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[ch];}); }
@@ -1101,7 +1102,9 @@ var garden=window.createHomeGarden({
  root:root,preview:PREVIEW,room:ROOM_ID,getState:function(){return state;},getMe:function(){return ui.me;},
  today:todayStr,addDays:addDays,monday:mondayOf,week:function(){return weekDates(0);},person:getPerson,
  chore:getChore,assign:computeAssignments,progress:progress,target:targetOf,units:unitsOf,
- cooked:cookCooked,cookEffort:cookDone,assignedEffort:effortAt,cookSlots:cookSlots,isCook:isCook,isSkipped:isSkipped,escape:esc,
+ cooked:cookCooked,cookEffort:cookDone,assignedEffort:effortAt,cookSlots:cookSlots,isCook:isCook,isSkipped:isSkipped,isPending:isPending,escape:esc,
+ loaded:function(){return PREVIEW||fbReady;},
+ goToChore:function(target){var day=target.day||todayStr();ui.view=day===todayStr()?'today':'week';ui.weekOffset=Math.round((parseYMD(mondayOf(day))-parseYMD(mondayOf(todayStr())))/604800000);ui.openTask=target.cid?day+'|'+target.cid:null;saveUI();render();requestAnimationFrame(function(){var nodes=root.querySelectorAll('[data-cid][data-date]'),item=Array.from(nodes).find(function(el){return el.getAttribute('data-cid')===target.cid&&el.getAttribute('data-date')===day;}),el=item?(item.closest('.task')||item.closest('li')||item):document.getElementById('calendar-'+day)||document.getElementById('page-title');if(el){el.classList.add('notification-focus');el.setAttribute('tabindex','-1');el.focus({preventScroll:true});el.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth',block:'center'});setTimeout(function(){el.classList.remove('notification-focus');},2500);}});},
  connected:function(){return online&&fbReady;},saving:function(){return !!saveTimer||statusName==="saving";},
  navigate:function(view){ui.view=view;saveUI();render();window.scrollTo(0,0);},
  redraw:render
